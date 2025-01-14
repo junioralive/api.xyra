@@ -1,6 +1,3 @@
 node_modules
-test.js
-test.html
-test.py
-test copy.py
+/test
 .wrangler
