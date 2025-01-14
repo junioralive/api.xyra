@@ -67,6 +67,21 @@
     .button-icon {
       margin-right: 8px;
     }
+    .documentation-button {
+      background: linear-gradient(to right, #6a5acd, #483d8b);
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 12px 24px;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    .documentation-button:hover {
+      background: linear-gradient(to right, #483d8b, #6a5acd);
+      transform: scale(1.05);
+    }
     .small-text {
       font-size: 0.875rem;
       color: #7d7d7d;
@@ -138,27 +153,24 @@
 <body>
   <main class="main">
     <h1 class="header">Welcome to Xyra API</h1>
-
     <div class="muted">🔒 Currently in closed beta - not for public use</div>
-
     <div class="card">
       <h2>Why do you need an API when Xyra is free? 🤔</h2>
-      <p>We get it - you're a developer and you love to build cool stuff! But remember, Xyra is already free and awesome to use directly!</p>
+      <Sure,>We get it - you're a developer and you love to build cool stuff! But remember, Xyra is already free and awesome to use directly! <br> Sure, go ahead! It’s not like we’ve been guarding it like a dragon hoards treasure or anything… okay, maybe just a little. 🐉</p>
+      <button class="button documentation-button" onclick="window.location.href='/doc'">
+        Visit Documentation
+      </button>
     </div>
-
     <div class="card">
-      <h2>Still want API access?</h2>
+      <h2>Want API access?</h2>
       <p>If you're really determined to use our API (we admire your enthusiasm!), hop into our Discord and let's chat about it!</p>
-      <button class="button" onclick="window.open('https://discord.gg/your-invite-link', '_blank')">
+      <button class="button" onclick="window.open('https://discord.gg/cwDTVKyKJz', '_blank')">
         Join our Discord
       </button>
     </div>
-
     <p class="small-text">
       PS: Want our API? Just ask! No riddles, no quests, just good old-fashioned "please." 😄
     </p>
-
-
     <p class="funny-text">Pro tip: If you stare at this breathing box long enough, you might hear it whisper, “Let’s code!”</p>
   </main>
   <footer class="footer">
