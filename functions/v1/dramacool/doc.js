@@ -364,7 +364,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/home?api_key=">/home</a></h2>
+      <h2>GET<a href="/v1/dramacool/home?api_key=">/home</a></h2>
       <p>
         Retrieve the home page using the POST/GET method.<br> 
         This will return results for the Drama home page.
@@ -372,7 +372,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/search?api_key=&query=">/search</a></h2>
+      <h2>GET<a href="/v1/dramacool/search?api_key=&query=">/search</a></h2>
       <p>
         Search for dramas using the POST/GET method.<br> 
         This requires three parameters: <span class="highlight"><code>api_key</code></span>, <span class="highlight"><code>query</code></span>, and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -381,7 +381,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/latest?api_key=&page=">/latest</a></h2>
+      <h2>GET<a href="/v1/dramacool/latest?api_key=&page=">/latest</a></h2>
       <p>
         Retrieve the latest dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -390,7 +390,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/latest_kdrama?api_key=&page=">/latest_kdrama</a></h2>
+      <h2>GET<a href="/v1/dramacool/latest_kdrama?api_key=&page=">/latest_kdrama</a></h2>
       <p>
         Retrieve the latest K-dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -399,7 +399,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/popular?api_key=&page=">/popular</a></h2>
+      <h2>GET<a href="/v1/dramacool/popular?api_key=&page=">/popular</a></h2>
       <p>
         Retrieve popular dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -408,7 +408,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/ongoing?api_key=&page=">/ongoing</a></h2>
+      <h2>GET<a href="/v1/dramacool/ongoing?api_key=&page=">/ongoing</a></h2>
       <p>
         Retrieve ongoing dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -417,7 +417,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/upcoming?api_key=&page=">/upcoming</a></h2>
+      <h2>GET<a href="/v1/dramacool/upcoming?api_key=&page=">/upcoming</a></h2>
       <p>
         Retrieve upcoming dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br> 
@@ -426,7 +426,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/discover?api_key=&page=">/discover</a></h2>
+      <h2>GET<a href="/v1/dramacool/discover?api_key=&page=">/discover</a></h2>
       <p>
         Discover dramas using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>page</code></span> (optional, default is 1).<br>
@@ -437,7 +437,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/info?api_key=&id=">/info</a></h2>
+      <h2>GET<a href="/v1/dramacool/info?api_key=&id=">/info</a></h2>
       <p>
         Retrieve detailed drama information using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>id</code></span>.<br> 
@@ -446,7 +446,7 @@ export async function onRequest(context) {
     </div>
 
     <div class="card">
-      <h2>GET<a href="/stream?api_key=&episode_id=">/stream</a></h2>
+      <h2>GET<a href="/v1/dramacool/stream?api_key=&episode_id=">/stream</a></h2>
       <p>
         Retrieve streaming information using the POST/GET method.<br> 
         This requires two parameters: <span class="highlight"><code>api_key</code></span> and <span class="highlight"><code>episode_id</code></span>.<br> 
