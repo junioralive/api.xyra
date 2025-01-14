@@ -1,0 +1,9 @@
+name = "video-scraper"
+compatibility_date = "2024-11-17"
+
+[build]
+command = ""
+
+[vars]
+API_KEYS = "key1,key2,key3"
+
