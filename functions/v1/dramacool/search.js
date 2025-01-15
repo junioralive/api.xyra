@@ -84,7 +84,7 @@ export async function onRequest({ request, env }) {
         }
 
         // Construct the target URL
-        const targetUrl = `https://dramacool.sh/?s=${encodeURIComponent(query)}&page=${page}`;
+        const targetUrl = `https://dramacool.sh/page/${page}/?s=${encodeURIComponent(query)}`;
 
         // Fetch the HTML content of the provided URL
         const response = await axios.get(targetUrl, {
