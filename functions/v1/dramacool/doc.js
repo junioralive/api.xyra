@@ -254,7 +254,7 @@ export async function onRequest(context) {
 
       function copyToClipboard(button, language) {
         const codeBlock = document.getElementById(language);
-        const code = codeBlock.innerText;
+        const code = codeBlock.querySelector('pre').innerText; // Get the code content inside <pre>
         navigator.clipboard.writeText(code).then(() => {
           button.classList.add('copied');
           button.textContent = 'Copied!';
@@ -324,41 +324,44 @@ export async function onRequest(context) {
       <div id="python" class="code-block">
         <button class="copy-button" onclick="copyToClipboard(this, 'python')">Copy</button>
         <pre>
-            import requests
+import requests
+import json
 
-            url = "https://api.dramacool.com/search"
-            payload = {"api_key": "your_api_key", "query": "Your Drama Title"}
-            response = requests.post(url, json=payload)
-            print(response.json())
+url = "https://api.xyrastream.live/v1/dramacool/search"
+payload = {"api_key": "your_api_key", "query": "Your Drama Title"}
+headers = {"Content-Type": "application/json"}
+
+response = requests.post(url, data=json.dumps(payload), headers=headers)
+print(response.json())
         </pre>
       </div>
 
       <div id="curl" class="code-block">
         <button class="copy-button" onclick="copyToClipboard(this, 'curl')">Copy</button>
         <pre>
-            curl -X POST \<br>
-              https://api.dramacool.com/search \<br>
-              -H "Content-Type: application/json" \<br>
-              -d '{"api_key": "your_api_key", "query": "Your Drama Title"}'
+curl -X POST \
+https://api.dramacool.com/search \
+-H "Content-Type: application/json" \
+-d '{"api_key": "your_api_key", "query": "Your Drama Title"}'
         </pre>
       </div>
 
       <div id="javascript" class="code-block">
         <button class="copy-button" onclick="copyToClipboard(this, 'javascript')">Copy</button>
         <pre>
-            fetch("https://api.dramacool.com/search", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                api_key: "your_api_key",
-                query: "Your Drama Title"
-              })
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error(error));
+fetch("https://api.xyrastream.live/v1/dramacool/search", {
+  method: "POST", // Specify the HTTP method
+  headers: {
+    "Content-Type": "application/json", // Define the content type
+  },
+  body: JSON.stringify({
+    api_key: "key1", // Replace with your actual API key
+    query: "Your Drama Title",
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error(error));
         </pre>
       </div>
     </div>

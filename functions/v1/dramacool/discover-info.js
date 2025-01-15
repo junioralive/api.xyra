@@ -1,5 +1,9 @@
 // Swapped filters dictionary
 const filters = {
+    type: {
+        "Movie": 'movie',
+        "Drama": 'drama',
+    },
     country: {
       "Chinese": 'chinese',
       "Korean": 'korean',
@@ -191,15 +195,56 @@ const filters = {
 
 // Function to validate API key
 function validateApiKey(apiKey, env) {
-    const validApiKeys = (env.API_KEYS || "").split(",");
+    const validApiKeys = (env.API_KEYS || "").split(",").map(key => key.trim());
     return validApiKeys.includes(apiKey);
 }
 
 export async function onRequest({ request, env }) {
+    // Define CORS headers
+    const corsHeaders = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400", // Cache preflight response for 24 hours
+    };
+
+    // Handle preflight OPTIONS requests
+    if (request.method === "OPTIONS") {
+        return new Response(null, { headers: corsHeaders });
+    }
+
     try {
-        // Parse the URL and extract parameters
-        const url = new URL(request.url);
-        const apiKey = url.searchParams.get("api_key");
+        let apiKey = null;
+
+        if (request.method === "POST") {
+            // Parse JSON body for API key
+            const contentType = request.headers.get("Content-Type") || "";
+            if (contentType.includes("application/json")) {
+                const body = await request.json();
+                apiKey = body.api_key;
+            } else {
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        message: "Unsupported Content-Type. Please use application/json.",
+                    }),
+                    { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        } else if (request.method === "GET") {
+            // Retrieve API key from query parameters for GET requests
+            const url = new URL(request.url);
+            apiKey = url.searchParams.get("api_key");
+        } else {
+            // Method not allowed
+            return new Response(
+                JSON.stringify({
+                    success: false,
+                    message: "Method not allowed. Use GET or POST.",
+                }),
+                { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         // Validate API key
         if (!apiKey || !validateApiKey(apiKey, env)) {
@@ -207,24 +252,28 @@ export async function onRequest({ request, env }) {
                 JSON.stringify({
                     success: false,
                     message: "Invalid or missing API key. You can’t call this a drama API without the drama of finding your missing key!",
-                    protip: "Missing API key? Join our Discord and claim yours—it’s free, and way better than staring at this error. 👉 https://discord.gg/cwDTVKyKJz"
+                    protip: "Missing API key? Join our Discord and claim yours—it’s free, and way better than staring at this error. 👉 https://discord.gg/cwDTVKyKJz",
                 }),
-                { status: 401, headers: { "Content-Type": "application/json" } }
+                { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        return new Response(JSON.stringify({
-            success: true,
-            data: filters, // Replace 'filters' with the actual data variable name if different
-        }), {
-            headers: { "Content-Type": "application/json" }
-        });
+        // Return the filters data
+        return new Response(
+            JSON.stringify({
+                success: true,
+                data: filters,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
     } catch (error) {
-        return new Response(JSON.stringify({
-            success: false,
-            message: error.message,
-        }), {
-            headers: { "Content-Type": "application/json" }
-        });
+        // Handle unexpected errors
+        return new Response(
+            JSON.stringify({
+                success: false,
+                message: error.message,
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
     }
 }

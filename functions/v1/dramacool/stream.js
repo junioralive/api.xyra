@@ -9,6 +9,19 @@ function validateApiKey(apiKey, env) {
 
 export async function onRequest(context) {
   const { request, env } = context;
+  
+  // Define CORS headers
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400", // Cache preflight response for 24 hours
+  };
+
+  // Handle OPTIONS method for CORS preflight
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   // Function to deobfuscate code
   function deobfuscateCode(p, a, c, k, e, d) {
@@ -112,177 +125,209 @@ export async function onRequest(context) {
     }
   }
 
-  // Only handle GET requests
-  if (request.method === "GET") {
-    const url = new URL(request.url);
-    const episodeId = url.searchParams.get("episode_id");
-    const apiKey = url.searchParams.get("api_key");
+  // Initialize variables
+  let apiKey = null;
+  let episodeId = null;
+  let page = "1";
 
-    // Validate API key
-    if (!apiKey || !validateApiKey(apiKey, env)) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message:
-            "Invalid or missing API key. You can’t call this a drama API without the drama of finding your missing key!",
-          protip:
-            "Missing API key? Join our Discord and claim yours—it’s free, and way better than staring at this error. 👉 https://discord.gg/cwDTVKyKJz",
-        }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Check for required episode_id
-    if (!episodeId) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Missing 'episode_id' query parameter.",
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    try {
-      // Step 1: Fetch the main episode page using axios
-      const episodeURL = `https://dramacool.sh/${episodeId}/`;
-      const episodeResponse = await axios.get(episodeURL, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9",
-          Referer: "https://dramacool.sh/",
-        },
-      });
-      const episodeHtml = episodeResponse.data;
-
-      // Step 2: Extract all server links using the same RegEx logic
-      const serverRegex =
-        /<div class="serverslist\s+([^"\s]+).*?"[^>]*data-server="([^"\s]+)"/gi;
-      let serverMatch;
-      const servers = {};
-
-      while ((serverMatch = serverRegex.exec(episodeHtml)) !== null) {
-        // Normalize server name to lowercase
-        const serverName = serverMatch[1].split(" ")[0].toLowerCase();
-        const serverLink = serverMatch[2];
-        servers[serverName] = { embeded_link: serverLink, m3u8: false };
-      }
-
-      // No servers found
-      if (Object.keys(servers).length === 0) {
+  // Extract parameters based on request method
+  if (request.method === "POST") {
+    // Parse JSON body for POST requests
+    const contentType = request.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      try {
+        const body = await request.json();
+        apiKey = body.api_key;
+        episodeId = body.episode_id;
+        page = body.page || page;
+      } catch (err) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "No servers found in episode HTML.",
+            message: "Invalid JSON body.",
           }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          }
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
-      // Step 3: Process each server link, excluding doodstream, mixdrop, and mp4upload
-      for (const [serverName, serverData] of Object.entries(servers)) {
-        if (["doodstream", "mixdrop", "mp4upload"].includes(serverName)) {
-          servers[serverName].skipped = true;
-          servers[serverName].m3u8 = false; // Explicitly set m3u8 to false
-          continue;
-        }
-
-        // Attempt to fetch and process the server
-        const result = await processServer(serverData.embeded_link);
-        if (result.stream) servers[serverName].stream = result.stream;
-        if (result.sub) servers[serverName].sub = result.sub;
-        if (typeof result.m3u8 !== "undefined")
-          servers[serverName].m3u8 = result.m3u8;
-        if (result.error) servers[serverName].error = result.error;
-      }
-
-      // Check if we've found any .m3u8 from the above servers
-      const foundAnyM3U8 = didFindM3U8(servers);
-
-      // If no .m3u8 found and we DO have a standard server, let's do the extra step:
-      // Fetch the standard server HTML => parse #list-server-more => process those links
-      if (!foundAnyM3U8 && servers["standard"] && servers["standard"].embeded_link) {
-        try {
-          const standardRes = await axios.get(servers["standard"].embeded_link, {
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-              "Accept-Language": "en-US,en;q=0.9",
-              Referer: "https://dramacool.sh/",
-            },
-          });
-          const $ = cheerio.load(standardRes.data);
-
-          // The snippet you provided:
-          // <div id="list-server-more"> ... <li class="linkserver" data-provider="xxxx" data-video="xxxx">
-          const subServers = {};
-          $("#list-server-more .list-server-items li.linkserver").each((i, el) => {
-            const provider = ($(el).attr("data-provider") || "").toLowerCase();
-            const videoLink = $(el).attr("data-video") || "";
-
-            // Skip doodstream, mixdrop, mp4upload, standard again
-            if (
-              ["doodstream", "mixdrop", "mp4upload", "standard"].includes(provider)
-            ) {
-              subServers[provider] = { embeded_link: videoLink, skipped: true, m3u8: false };
-            } else if (videoLink) {
-              subServers[provider] = { embeded_link: videoLink, m3u8: false };
-            }
-          });
-
-          // Process each newly discovered subServer and add to main servers object
-          for (const [subServerName, subServerData] of Object.entries(subServers)) {
-            if (subServerData.skipped) {
-              servers[subServerName] = subServerData;
-              continue;
-            }
-
-            const result = await processServer(subServerData.embeded_link);
-            if (result.stream) subServerData.stream = result.stream;
-            if (result.sub) subServerData.sub = result.sub;
-            if (typeof result.m3u8 !== "undefined")
-              subServerData.m3u8 = result.m3u8;
-            if (result.error) subServerData.error = result.error;
-
-            // Add subServer to main servers object
-            servers[subServerName] = subServerData;
-          }
-        } catch (err) {
-          // Log the error and continue
-          console.error(
-            `Error fetching standard server's sub-servers: ${err.message}`
-          );
-          // Optionally, you can add an error field to the standard server
-          servers["standard"].error = `Error fetching standard server's sub-servers: ${err.message}`;
-        }
-      }
-
-      // Return the results
-      return new Response(
-        JSON.stringify({ success: true, data: servers }),
-        { headers: { "Content-Type": "application/json" } }
-      );
-    } catch (error) {
+    } else {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Error processing episode ID: ${error.message}`,
+          message: "Unsupported Content-Type. Please use application/json.",
         }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+  } else if (request.method === "GET") {
+    // Extract parameters from query string for GET requests
+    const url = new URL(request.url);
+    apiKey = url.searchParams.get("api_key");
+    episodeId = url.searchParams.get("episode_id");
+    page = url.searchParams.get("page") || page;
+  } else {
+    // Method not allowed
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Method not allowed. Use GET, POST, or OPTIONS.",
+      }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
-  // Unsupported request method
-  return new Response(
-    JSON.stringify({ success: false, error: "Unsupported request method" }),
-    {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
+  // Validate API key
+  if (!apiKey || !validateApiKey(apiKey, env)) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Invalid or missing API key. You can’t call this a drama API without the drama of finding your missing key!",
+        protip: "Missing API key? Join our Discord and claim yours—it’s free, and way better than staring at this error. 👉 https://discord.gg/cwDTVKyKJz",
+      }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Check for required episode_id
+  if (!episodeId) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Missing 'episode_id' query parameter.",
+      }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  try {
+    // Step 1: Fetch the main episode page using axios
+    const episodeURL = `https://dramacool.sh/${encodeURIComponent(episodeId)}/`;
+    const episodeResponse = await axios.get(episodeURL, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        Referer: "https://dramacool.sh/",
+      },
+    });
+    const episodeHtml = episodeResponse.data;
+
+    // Step 2: Extract all server links using the same RegEx logic
+    const serverRegex =
+      /<div class="serverslist\s+([^"\s]+).*?"[^>]*data-server="([^"\s]+)"/gi;
+    let serverMatch;
+    const servers = {};
+
+    while ((serverMatch = serverRegex.exec(episodeHtml)) !== null) {
+      // Normalize server name to lowercase
+      const serverName = serverMatch[1].split(" ")[0].toLowerCase();
+      const serverLink = serverMatch[2];
+      servers[serverName] = { embeded_link: serverLink, m3u8: false };
     }
-  );
+
+    // No servers found
+    if (Object.keys(servers).length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No servers found in episode HTML.",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Step 3: Process each server link, excluding doodstream, mixdrop, and mp4upload
+    for (const [serverName, serverData] of Object.entries(servers)) {
+      if (["doodstream", "mixdrop", "mp4upload"].includes(serverName)) {
+        servers[serverName].skipped = true;
+        servers[serverName].m3u8 = false; // Explicitly set m3u8 to false
+        continue;
+      }
+
+      // Attempt to fetch and process the server
+      const result = await processServer(serverData.embeded_link);
+      if (result.stream) servers[serverName].stream = result.stream;
+      if (result.sub) servers[serverName].sub = result.sub;
+      if (typeof result.m3u8 !== "undefined")
+        servers[serverName].m3u8 = result.m3u8;
+      if (result.error) servers[serverName].error = result.error;
+    }
+
+    // Check if we've found any .m3u8 from the above servers
+    const foundAnyM3U8 = didFindM3U8(servers);
+
+    // If no .m3u8 found and we DO have a standard server, let's do the extra step:
+    // Fetch the standard server HTML => parse #list-server-more => process those links
+    if (!foundAnyM3U8 && servers["standard"] && servers["standard"].embeded_link) {
+      try {
+        const standardRes = await axios.get(servers["standard"].embeded_link, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+            Referer: "https://dramacool.sh/",
+          },
+        });
+        const $ = cheerio.load(standardRes.data);
+
+        // The snippet you provided:
+        // <div id="list-server-more"> ... <li class="linkserver" data-provider="xxxx" data-video="xxxx">
+        const subServers = {};
+        $("#list-server-more .list-server-items li.linkserver").each((i, el) => {
+          const provider = ($(el).attr("data-provider") || "").toLowerCase();
+          const videoLink = $(el).attr("data-video") || "";
+
+          // Skip doodstream, mixdrop, mp4upload, standard again
+          if (
+            ["doodstream", "mixdrop", "mp4upload"].includes(provider)
+          ) {
+            subServers[provider] = { embeded_link: videoLink, skipped: true, m3u8: false };
+          } else if (videoLink) {
+            subServers[provider] = { embeded_link: videoLink, m3u8: false };
+          }
+        });
+
+        // Process each newly discovered subServer and add to main servers object
+        for (const [subServerName, subServerData] of Object.entries(subServers)) {
+          if (subServerData.skipped) {
+            servers[subServerName] = subServerData;
+            continue;
+          }
+
+          const result = await processServer(subServerData.embeded_link);
+          if (result.stream) subServerData.stream = result.stream;
+          if (result.sub) subServerData.sub = result.sub;
+          if (typeof result.m3u8 !== "undefined")
+            subServerData.m3u8 = result.m3u8;
+          if (result.error) subServerData.error = result.error;
+
+          // Add subServer to main servers object
+          servers[subServerName] = subServerData;
+        }
+      } catch (err) {
+        // Log the error and continue
+        console.error(
+          `Error fetching standard server's sub-servers: ${err.message}`
+        );
+        // Optionally, you can add an error field to the standard server
+        servers["standard"].error = `Error fetching standard server's sub-servers: ${err.message}`;
+      }
+    }
+
+    // Return the results
+    return new Response(
+      JSON.stringify({ success: true, data: servers }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Error processing episode ID: ${error.message}`,
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 }
