@@ -211,25 +211,21 @@ export async function onRequest(context) {
     });
     const episodeHtml = episodeResponse.data;
 
-    // Step 2: Extract all server links using the same RegEx logic
-    const serverRegex =
-      /<div class="serverslist\s+([^"\s]+).*?"[^>]*data-server="([^"\s]+)"/gi;
-    let serverMatch;
-    const servers = {};
-
-    while ((serverMatch = serverRegex.exec(episodeHtml)) !== null) {
-      // Normalize server name to lowercase
-      const serverName = serverMatch[1].split(" ")[0].toLowerCase();
-      const serverLink = serverMatch[2];
-      servers[serverName] = { embeded_link: serverLink, m3u8: false };
-    }
-
-    // No servers found
-    if (Object.keys(servers).length === 0) {
+    // Step 2: Extract server URL from w-server div (more reliable than iframe)
+    const $ = cheerio.load(episodeHtml);
+    const serverUrl = $('#w-server .serverslist').attr('data-server');
+    
+    if (!serverUrl) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "No servers found in episode HTML.",
+          error: "No server URL found in w-server div.",
+          debug: {
+            w_server_found: $('#w-server').length > 0,
+            serverslist_found: $('#w-server .serverslist').length > 0,
+            data_server_attr: $('#w-server .serverslist').attr('data-server'),
+            all_data_servers: $('.serverslist').map((i, el) => $(el).attr('data-server')).get()
+          }
         }),
         {
           status: 400,
@@ -238,7 +234,149 @@ export async function onRequest(context) {
       );
     }
 
-    // Step 3: Process each server link, excluding doodstream, mixdrop, and mp4upload
+    // Clean up the server URL (remove extra spaces)
+    const cleanServerUrl = serverUrl.trim();
+
+    // Step 3: Fetch the server page to get the iframe
+    const serverResponse = await axios.get(cleanServerUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        Referer: "https://dramacool.sh/",
+      },
+    });
+    const serverHtml = serverResponse.data;
+
+    // Step 4: Extract iframe source from the server page
+    const $server = cheerio.load(serverHtml);
+    
+    // Look for iframe that contains the actual server list
+    const iframeSelectors = [
+      'iframe[src*="vidbasic"]',
+      'iframe[src*="embed"]',
+      'iframe[src*="player"]',
+      'iframe'
+    ];
+    
+    let embedIframeSrc = null;
+    for (const selector of iframeSelectors) {
+      embedIframeSrc = $server(selector).attr('src');
+      if (embedIframeSrc) break;
+    }
+    
+    if (!embedIframeSrc) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No embed iframe found in server page.",
+          server_url: cleanServerUrl,
+          debug: {
+            server_html_length: serverHtml.length,
+            server_html_snippet: serverHtml.substring(0, 500),
+            iframe_found: $server('iframe').length,
+            all_iframes: $server('iframe').map((i, el) => $server(el).attr('src')).get()
+          }
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Clean up the iframe src (handle relative URLs)
+    let cleanEmbedIframeSrc = embedIframeSrc.trim();
+    if (cleanEmbedIframeSrc.startsWith('/')) {
+      const baseUrl = new URL(cleanServerUrl).origin;
+      cleanEmbedIframeSrc = baseUrl + cleanEmbedIframeSrc;
+    }
+
+    // Step 5: Fetch the iframe content to get the actual server list
+    const embedResponse = await axios.get(cleanEmbedIframeSrc, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        Referer: cleanServerUrl,
+      },
+    });
+    const embedHtml = embedResponse.data;
+
+    // Step 6: Extract server links from the embed iframe content
+    const $embed = cheerio.load(embedHtml);
+    const servers = {};
+
+    // Try multiple selectors to find the server list
+    const serverSelectors = [
+      '#list-server-more .list-server-items li.linkserver',
+      '.list-server-items li.linkserver',
+      'li.linkserver',
+      '.linkserver'
+    ];
+
+    let serversFound = false;
+    for (const selector of serverSelectors) {
+      $embed(selector).each((i, el) => {
+        const provider = ($embed(el).attr('data-provider') || '').toLowerCase().replace(/\s+/g, '');
+        const videoLink = $embed(el).attr('data-video') || '';
+        
+        if (provider && videoLink) {
+          // Handle relative URLs for standard server
+          let fullVideoLink = videoLink;
+          if (videoLink.startsWith('/')) {
+            const baseUrl = new URL(cleanEmbedIframeSrc).origin;
+            fullVideoLink = baseUrl + videoLink;
+          }
+          
+          servers[provider] = { 
+            embeded_link: fullVideoLink, 
+            m3u8: false,
+            provider_name: $embed(el).attr('data-provider') || provider
+          };
+          serversFound = true;
+        }
+      });
+      
+      if (serversFound) break; // Stop if we found servers with this selector
+    }
+
+    // If no servers found, return the embed iframe URL as fallback
+    if (Object.keys(servers).length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            iframe_only: {
+              embeded_link: cleanEmbedIframeSrc,
+              m3u8: false,
+              provider_name: "Direct Embed Iframe",
+              embed_only: true
+            }
+          },
+          server_url: cleanServerUrl,
+          embed_iframe_url: cleanEmbedIframeSrc,
+          has_m3u8: false,
+          message: "No server list found in embed iframe, returning iframe URL",
+          debug: {
+            embed_html_length: embedHtml.length,
+            embed_html_snippet: embedHtml.substring(0, 500),
+            list_server_more_found: $embed('#list-server-more').length,
+            list_server_items_found: $embed('.list-server-items').length,
+            linkserver_elements_found: $embed('li.linkserver').length,
+            all_li_elements: $embed('li').map((i, el) => ({
+              class: $embed(el).attr('class'),
+              data_provider: $embed(el).attr('data-provider'),
+              data_video: $embed(el).attr('data-video'),
+              text: $embed(el).text().trim()
+            })).get()
+          }
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Step 7: Process each server link, excluding doodstream, mixdrop, and mp4upload
     for (const [serverName, serverData] of Object.entries(servers)) {
       if (["doodstream", "mixdrop", "mp4upload"].includes(serverName)) {
         servers[serverName].skipped = true;
@@ -258,67 +396,25 @@ export async function onRequest(context) {
     // Check if we've found any .m3u8 from the above servers
     const foundAnyM3U8 = didFindM3U8(servers);
 
-    // If no .m3u8 found and we DO have a standard server, let's do the extra step:
-    // Fetch the standard server HTML => parse #list-server-more => process those links
-    if (!foundAnyM3U8 && servers["standard"] && servers["standard"].embeded_link) {
-      try {
-        const standardRes = await axios.get(servers["standard"].embeded_link, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-            Referer: "https://dramacool.sh/",
-          },
-        });
-        const $ = cheerio.load(standardRes.data);
-
-        // The snippet you provided:
-        // <div id="list-server-more"> ... <li class="linkserver" data-provider="xxxx" data-video="xxxx">
-        const subServers = {};
-        $("#list-server-more .list-server-items li.linkserver").each((i, el) => {
-          const provider = ($(el).attr("data-provider") || "").toLowerCase();
-          const videoLink = $(el).attr("data-video") || "";
-
-          // Skip doodstream, mixdrop, mp4upload, standard again
-          if (
-            ["doodstream", "mixdrop", "mp4upload"].includes(provider)
-          ) {
-            subServers[provider] = { embeded_link: videoLink, skipped: true, m3u8: false };
-          } else if (videoLink) {
-            subServers[provider] = { embeded_link: videoLink, m3u8: false };
-          }
-        });
-
-        // Process each newly discovered subServer and add to main servers object
-        for (const [subServerName, subServerData] of Object.entries(subServers)) {
-          if (subServerData.skipped) {
-            servers[subServerName] = subServerData;
-            continue;
-          }
-
-          const result = await processServer(subServerData.embeded_link);
-          if (result.stream) subServerData.stream = result.stream;
-          if (result.sub) subServerData.sub = result.sub;
-          if (typeof result.m3u8 !== "undefined")
-            subServerData.m3u8 = result.m3u8;
-          if (result.error) subServerData.error = result.error;
-
-          // Add subServer to main servers object
-          servers[subServerName] = subServerData;
+    // If no .m3u8 found, return all embed links
+    if (!foundAnyM3U8) {
+      // Add a flag to indicate that these are embed links without m3u8
+      for (const [serverName, serverData] of Object.entries(servers)) {
+        if (!serverData.skipped && !serverData.m3u8) {
+          servers[serverName].embed_only = true;
         }
-      } catch (err) {
-        // Log the error and continue
-        console.error(
-          `Error fetching standard server's sub-servers: ${err.message}`
-        );
-        // Optionally, you can add an error field to the standard server
-        servers["standard"].error = `Error fetching standard server's sub-servers: ${err.message}`;
       }
     }
 
     // Return the results
     return new Response(
-      JSON.stringify({ success: true, data: servers }),
+      JSON.stringify({ 
+        success: true, 
+        data: servers,
+        server_url: cleanServerUrl,
+        embed_iframe_url: cleanEmbedIframeSrc,
+        has_m3u8: foundAnyM3U8
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
