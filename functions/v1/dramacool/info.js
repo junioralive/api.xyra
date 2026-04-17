@@ -117,7 +117,8 @@ export async function onRequest({ request, env }) {
         const episodesSet = new Set();
         const episodes = $("#episode-list .episode-list li").map((_, el) => {
             const episodeTitle = $(el).find("h3 a").text().trim();
-            const episodeLink = $(el).find("h3 a").attr("href").trim().replace("https://dramacool.sh", "").replace("/", "").replace("/", "");
+            const rawHref = $(el).find("h3 a").attr("href") || "";
+            const episodeLink = rawHref.trim().replace("https://dramacool.sh", "").replace(/^\//, "").replace(/\/$/, "");
             const episodeTime = $(el).find(".time").text().trim();
             const episodeKey = `${episodeTitle}-${episodeLink}`;
 
