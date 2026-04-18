@@ -30,32 +30,73 @@ function deobfuscate(p, a, c, k) {
   return p;
 }
 
+/**
+ * Extract m3u8 + subtitle URLs from a player page.
+ * Handles multiple player types:
+ *  1. eval(function(p,a,c,k,e,d)) — packed JS (most DramaCool servers)
+ *  2. JWPlayer / StreamWish / FileLions (atob encoded or direct JSON)
+ *  3. Direct .m3u8 URL in script tags
+ */
 function extractM3u8(html) {
   const $ = cheerio.load(html);
-  let scriptContent = null;
+  const allScripts = $("script").map((_, el) => $(el).html() || "").get().join("\n");
 
+  // ── Method 1: eval(function(p,a,c,k,e,d)) packer ──────────────────────────
+  let packedScript = null;
   $("script").each((_, el) => {
     const src = $(el).html() || "";
-    if (src.includes("eval(function(p,a,c,k,e,d)")) {
-      scriptContent = src;
-      return false;
-    }
+    if (src.includes("eval(function(p,a,c,k,e,d)")) { packedScript = src; return false; }
   });
 
-  if (!scriptContent) return { m3u8: false, error: "No obfuscated script found" };
+  if (packedScript) {
+    const match = packedScript.match(
+      /eval\(function\(p,a,c,k,e,d\)\{.*?\}\('(.+?)',(\d+),(\d+),'(.+?)'\.split\('\|'\)\)\)/
+    );
+    if (match) {
+      const [, code, radix, size, dict] = match;
+      const deobfed = deobfuscate(code, parseInt(radix), parseInt(size), dict.split("|"));
+      const stream = (deobfed.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/g) || [])[0] || null;
+      const sub = (deobfed.match(/(https?:\/\/[^"'\s]+\.vtt[^"'\s]*)/g) || [])[0] || null;
+      if (stream) return { stream, sub, m3u8: true };
+    }
+  }
 
-  const match = scriptContent.match(
-    /eval\(function\(p,a,c,k,e,d\)\{.*?\}\('(.+?)',(\d+),(\d+),'(.+?)'\.split\('\|'\)\)\)/
-  );
-  if (!match) return { m3u8: false, error: "Failed to parse obfuscated script" };
+  // ── Method 2: JWPlayer setup / StreamWish / FileLions ─────────────────────
+  // Pattern: file:"https://...m3u8" or sources:[{file:"..."}]
+  const jwMatch = allScripts.match(/["']?file["']?\s*:\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/source\s*=\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/src\s*:\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/(https?:\/\/[^"'\s]+\.m3u8(?:[^"'\s]*)?)/);
 
-  const [, code, radix, size, dict] = match;
-  const deobfed = deobfuscate(code, parseInt(radix), parseInt(size), dict.split("|"));
+  if (jwMatch) {
+    const stream = jwMatch[1];
+    const sub = (allScripts.match(/["']?file["']?\s*:\s*["']([^"']+\.vtt[^"']*)["']/) || [])[1] || null;
+    return { stream, sub, m3u8: true };
+  }
 
-  const streamUrl = (deobfed.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/g) || [])[0] || null;
-  const subUrl = (deobfed.match(/(https?:\/\/[^"'\s]+\.vtt[^"'\s]*)/g) || [])[0] || null;
+  // ── Method 3: atob() encoded content (StreamWish/FileLions style) ──────────
+  const atobMatches = allScripts.match(/atob\(["']([A-Za-z0-9+/=]{20,})["']\)/g) || [];
+  for (const encoded of atobMatches) {
+    try {
+      const b64 = encoded.match(/atob\(["']([^"']+)["']\)/)?.[1];
+      if (!b64) continue;
+      const decoded = Buffer.from(b64, "base64").toString("utf-8");
+      const m3u8Match = decoded.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/);
+      if (m3u8Match) {
+        const vttMatch = decoded.match(/(https?:\/\/[^"'\s]+\.vtt[^"'\s]*)/);
+        return { stream: m3u8Match[1], sub: vttMatch?.[1] || null, m3u8: true };
+      }
+    } catch (_) { continue; }
+  }
 
-  return { stream: streamUrl, sub: subUrl, m3u8: !!streamUrl };
+  // ── Method 4: Direct .m3u8 anywhere in scripts ────────────────────────────
+  const directMatch = allScripts.match(/(https?:\/\/[^"'\s<>]+\.m3u8(?:[^"'\s<>]*)?)/);
+  if (directMatch) {
+    const vttDirect = allScripts.match(/(https?:\/\/[^"'\s<>]+\.vtt(?:[^"'\s<>]*)?)/);
+    return { stream: directMatch[1], sub: vttDirect?.[1] || null, m3u8: true };
+  }
+
+  return { m3u8: false, error: "No stream found (tried packed/jwplayer/atob/direct)" };
 }
 
 // ─── Fetch episode page and extract servers ───────────────────────────────────
@@ -190,11 +231,48 @@ async function fetchSubServers(serverUrl, embedIframeSrc) {
 }
 
 /**
- * Process a server URL: fetch it, run the deobfuscator, extract m3u8 + sub.
+ * Detect player type from URL hostname.
+ */
+function detectPlayerType(url) {
+  const host = (new URL(url)).hostname.toLowerCase();
+  if (host.includes("streamwish") || host.includes("dwish") || host.includes("wishembed")) return "streamwish";
+  if (host.includes("filelions") || host.includes("dlions") || host.includes("lion")) return "filelions";
+  if (host.includes("vidbasic")) return "vidbasic";
+  return "generic";
+}
+
+/**
+ * Process a server URL: fetch it, try multiple extraction methods.
  */
 async function processServer(serverUrl) {
   try {
-    const res = await axios.get(serverUrl, { headers: AXIOS_HEADERS, maxRedirects: 5 });
+    // For StreamWish/FileLions: try their internal sources API first
+    const playerType = detectPlayerType(serverUrl);
+    
+    if (playerType === "streamwish" || playerType === "filelions") {
+      // Extract file ID from URL path
+      const pathParts = new URL(serverUrl).pathname.split("/").filter(Boolean);
+      const fileId = pathParts[pathParts.length - 1];
+      
+      if (fileId) {
+        // Try the embed page directly — these players often expose sources in script tags
+        const embedUrl = serverUrl.includes("/e/") ? serverUrl : serverUrl.replace("/v/", "/e/");
+        try {
+          const embedRes = await axios.get(embedUrl, {
+            headers: { ...AXIOS_HEADERS, Referer: "https://dramacool.sh/" },
+            maxRedirects: 5,
+          });
+          const result = extractM3u8(embedRes.data);
+          if (result.m3u8) return result;
+        } catch (_) {}
+      }
+    }
+
+    // Generic approach: fetch and extract
+    const res = await axios.get(serverUrl, {
+      headers: { ...AXIOS_HEADERS, Referer: "https://dramacool.sh/" },
+      maxRedirects: 5,
+    });
     return extractM3u8(res.data);
   } catch (err) {
     return { m3u8: false, error: `Fetch failed: ${err.message}` };
