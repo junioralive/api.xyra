@@ -1,429 +1,413 @@
 import * as cheerio from "cheerio";
 import axios from "axios";
 
-// Function to validate API key
 function validateApiKey(apiKey, env) {
-  const validApiKeys = (env.API_KEYS || "").split(",");
+  const validApiKeys = (env.API_KEYS || "").split(",").map((k) => k.trim());
   return validApiKeys.includes(apiKey);
 }
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400",
+};
+
+const AXIOS_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept-Language": "en-US,en;q=0.9",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  Referer: "https://dramacool.sh/",
+};
+
+// ─── Deobfuscator ──────────────────────────────────────────────────────────────
+
+function deobfuscate(p, a, c, k) {
+  while (c--) {
+    if (k[c]) p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  }
+  return p;
+}
+
+/**
+ * Extract m3u8 + subtitle URLs from a player page.
+ * Handles multiple player types:
+ *  1. eval(function(p,a,c,k,e,d)) — packed JS (most DramaCool servers)
+ *  2. JWPlayer / StreamWish / FileLions (atob encoded or direct JSON)
+ *  3. Direct .m3u8 URL in script tags
+ */
+function extractM3u8(html) {
+  const $ = cheerio.load(html);
+  const allScripts = $("script").map((_, el) => $(el).html() || "").get().join("\n");
+
+  // ── Method 1: eval(function(p,a,c,k,e,d)) packer ──────────────────────────
+  let packedScript = null;
+  $("script").each((_, el) => {
+    const src = $(el).html() || "";
+    if (src.includes("eval(function(p,a,c,k,e,d)")) { packedScript = src; return false; }
+  });
+
+  if (packedScript) {
+    const match = packedScript.match(
+      /eval\(function\(p,a,c,k,e,d\)\{.*?\}\('(.+?)',(\d+),(\d+),'(.+?)'\.split\('\|'\)\)\)/
+    );
+    if (match) {
+      const [, code, radix, size, dict] = match;
+      const deobfed = deobfuscate(code, parseInt(radix), parseInt(size), dict.split("|"));
+      const stream = (deobfed.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/g) || [])[0] || null;
+      const sub = (deobfed.match(/(https?:\/\/[^"'\s]+\.vtt[^"'\s]*)/g) || [])[0] || null;
+      if (stream) return { stream, sub, m3u8: true };
+    }
+  }
+
+  // ── Method 2: JWPlayer setup / StreamWish / FileLions ─────────────────────
+  // Pattern: file:"https://...m3u8" or sources:[{file:"..."}]
+  const jwMatch = allScripts.match(/["']?file["']?\s*:\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/source\s*=\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/src\s*:\s*["']([^"']+\.m3u8[^"']*)["']/) ||
+                  allScripts.match(/(https?:\/\/[^"'\s]+\.m3u8(?:[^"'\s]*)?)/);
+
+  if (jwMatch) {
+    const stream = jwMatch[1];
+    const sub = (allScripts.match(/["']?file["']?\s*:\s*["']([^"']+\.vtt[^"']*)["']/) || [])[1] || null;
+    return { stream, sub, m3u8: true };
+  }
+
+  // ── Method 3: atob() encoded content (StreamWish/FileLions style) ──────────
+  const atobMatches = allScripts.match(/atob\(["']([A-Za-z0-9+/=]{20,})["']\)/g) || [];
+  for (const encoded of atobMatches) {
+    try {
+      const b64 = encoded.match(/atob\(["']([^"']+)["']\)/)?.[1];
+      if (!b64) continue;
+      const decoded = Buffer.from(b64, "base64").toString("utf-8");
+      const m3u8Match = decoded.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/);
+      if (m3u8Match) {
+        const vttMatch = decoded.match(/(https?:\/\/[^"'\s]+\.vtt[^"'\s]*)/);
+        return { stream: m3u8Match[1], sub: vttMatch?.[1] || null, m3u8: true };
+      }
+    } catch (_) { continue; }
+  }
+
+  // ── Method 4: Direct .m3u8 anywhere in scripts ────────────────────────────
+  const directMatch = allScripts.match(/(https?:\/\/[^"'\s<>]+\.m3u8(?:[^"'\s<>]*)?)/);
+  if (directMatch) {
+    const vttDirect = allScripts.match(/(https?:\/\/[^"'\s<>]+\.vtt(?:[^"'\s<>]*)?)/);
+    return { stream: directMatch[1], sub: vttDirect?.[1] || null, m3u8: true };
+  }
+
+  return { m3u8: false, error: "No stream found (tried packed/jwplayer/atob/direct)" };
+}
+
+// ─── Fetch episode page and extract servers ───────────────────────────────────
+
+/**
+ * Try to load the DramaCool episode page for the given slug.
+ * Returns { html, finalUrl } or throws.
+ */
+async function fetchEpisodePage(slug) {
+  // Try slug as-is first, then with -english-subbed suffix
+  const candidates = [
+    `https://dramacool.sh/${slug}/`,
+    `https://dramacool.sh/${slug}-english-subbed/`,
+    `https://dramacool.sh/${slug}-english-sub/`,
+  ];
+
+  // Deduplicate (slug may already end with -english-subbed)
+  const seen = new Set();
+  const unique = candidates.filter((u) => {
+    if (seen.has(u)) return false;
+    seen.add(u);
+    return true;
+  });
+
+  let lastError = null;
+  for (const url of unique) {
+    try {
+      const res = await axios.get(url, {
+        headers: AXIOS_HEADERS,
+        maxRedirects: 5,
+        validateStatus: (s) => s < 400, // treat 4xx as error
+      });
+      if (res.status < 400) return { html: res.data, finalUrl: url };
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw new Error(`Episode page not found. Last error: ${lastError?.message}`);
+}
+
+/**
+ * Extract server list from episode HTML using BOTH approaches:
+ * 1. Regex approach (backup) — reliable, fast
+ * 2. Cheerio #w-server approach (new) — more structured
+ */
+function extractServersFromHtml(html, baseUrl) {
+  const servers = {};
+
+  // ── Approach 1: Regex (from stream_backup.js — very reliable) ──────────────
+  const serverRegex =
+    /<div[^>]*class="[^"]*serverslist[^"]*([^"]*)"[^>]*data-server="([^"]+)"/gi;
+  let match;
+  while ((match = serverRegex.exec(html)) !== null) {
+    const name = match[1].trim().split(/\s+/)[0].toLowerCase();
+    const link = match[2].trim();
+    if (name && link) servers[name] = { embeded_link: link, m3u8: false };
+  }
+
+  // ── Approach 2: Cheerio #w-server (current stream.js) ──────────────────────
+  if (Object.keys(servers).length === 0) {
+    const $ = cheerio.load(html);
+    $(".serverslist").each((_, el) => {
+      const classes = ($(el).attr("class") || "").split(/\s+/);
+      const name = classes.find((c) => c !== "serverslist")?.toLowerCase();
+      const link = $(el).attr("data-server")?.trim();
+      if (name && link) servers[name] = { embeded_link: link, m3u8: false };
+    });
+  }
+
+  // ── Approach 3: Any data-server attribute ───────────────────────────────────
+  if (Object.keys(servers).length === 0) {
+    const $ = cheerio.load(html);
+    $("[data-server]").each((i, el) => {
+      const link = $(el).attr("data-server")?.trim();
+      const name = $(el).attr("class")?.split(/\s+/).find((c) => c !== "serverslist") 
+                   ?? `server${i}`;
+      if (link) servers[name.toLowerCase()] = { embeded_link: link, m3u8: false };
+    });
+  }
+
+  return servers;
+}
+
+/**
+ * Given a server URL, fetch the embed page and look for sub-servers
+ * in #list-server-more (from stream_backup.js approach).
+ */
+async function fetchSubServers(serverUrl, embedIframeSrc) {
+  const subServers = {};
+
+  // Try the server URL directly (cheerio approach from new stream.js)
+  let targetUrl = serverUrl;
+  try {
+    const serverRes = await axios.get(serverUrl, { headers: AXIOS_HEADERS, maxRedirects: 5 });
+    const $srv = cheerio.load(serverRes.data);
+
+    // Look for embedded iframe
+    let iframeSrc = null;
+    for (const sel of ['iframe[src*="vidbasic"]', 'iframe[src*="embed"]', 'iframe']) {
+      iframeSrc = $srv(sel).attr("src");
+      if (iframeSrc) break;
+    }
+
+    if (iframeSrc) {
+      if (iframeSrc.startsWith("/")) iframeSrc = new URL(serverUrl).origin + iframeSrc;
+      targetUrl = iframeSrc.trim();
+    }
+  } catch (_) { /* fall through */ }
+
+  // Fetch the embed iframe / target page for sub-server list
+  try {
+    const embedRes = await axios.get(targetUrl, {
+      headers: { ...AXIOS_HEADERS, Referer: serverUrl },
+      maxRedirects: 5,
+    });
+    const $embed = cheerio.load(embedRes.data);
+
+    $embed("#list-server-more .list-server-items li.linkserver, li.linkserver").each(
+      (_, el) => {
+        const provider = ($embed(el).attr("data-provider") || "").toLowerCase().replace(/\s+/g, "");
+        let link = $embed(el).attr("data-video") || "";
+        if (!provider || !link) return;
+        if (link.startsWith("/")) link = new URL(targetUrl).origin + link;
+        subServers[provider] = { embeded_link: link.trim(), m3u8: false };
+      }
+    );
+
+    return { subServers, embedUrl: targetUrl };
+  } catch (err) {
+    return { subServers, embedUrl: targetUrl };
+  }
+}
+
+/**
+ * Detect player type from URL hostname.
+ */
+function detectPlayerType(url) {
+  const host = (new URL(url)).hostname.toLowerCase();
+  if (host.includes("streamwish") || host.includes("dwish") || host.includes("wishembed")) return "streamwish";
+  if (host.includes("filelions") || host.includes("dlions") || host.includes("lion")) return "filelions";
+  if (host.includes("vidbasic")) return "vidbasic";
+  return "generic";
+}
+
+/**
+ * Process a server URL: fetch it, try multiple extraction methods.
+ */
+async function processServer(serverUrl) {
+  try {
+    // For StreamWish/FileLions: try their internal sources API first
+    const playerType = detectPlayerType(serverUrl);
+    
+    if (playerType === "streamwish" || playerType === "filelions") {
+      // Extract file ID from URL path
+      const pathParts = new URL(serverUrl).pathname.split("/").filter(Boolean);
+      const fileId = pathParts[pathParts.length - 1];
+      
+      if (fileId) {
+        // Try the embed page directly — these players often expose sources in script tags
+        const embedUrl = serverUrl.includes("/e/") ? serverUrl : serverUrl.replace("/v/", "/e/");
+        try {
+          const embedRes = await axios.get(embedUrl, {
+            headers: { ...AXIOS_HEADERS, Referer: "https://dramacool.sh/" },
+            maxRedirects: 5,
+          });
+          const result = extractM3u8(embedRes.data);
+          if (result.m3u8) return result;
+        } catch (_) {}
+      }
+    }
+
+    // Generic approach: fetch and extract
+    const res = await axios.get(serverUrl, {
+      headers: { ...AXIOS_HEADERS, Referer: "https://dramacool.sh/" },
+      maxRedirects: 5,
+    });
+    return extractM3u8(res.data);
+  } catch (err) {
+    return { m3u8: false, error: `Fetch failed: ${err.message}` };
+  }
+}
+
+// ─── Main handler ─────────────────────────────────────────────────────────────
+
 export async function onRequest(context) {
   const { request, env } = context;
-  
-  // Define CORS headers
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Max-Age": "86400", // Cache preflight response for 24 hours
-  };
 
-  // Handle OPTIONS method for CORS preflight
   if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
-  // Function to deobfuscate code
-  function deobfuscateCode(p, a, c, k, e, d) {
-    while (c--) {
-      if (k[c]) {
-        p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
-      }
-    }
-    return p;
-  }
-
-  // Function to extract URLs from text
-  function extractUrls(text) {
-    const urlRegex = /(https?:\/\/[^"\s]+\.[^"\s]+)/g;
-    return text.match(urlRegex) || [];
-  }
-
-  // Function to filter specific URLs and determine m3u8 presence
-  function findSpecificUrls(urls) {
-    const streamUrl = urls.find((url) => url.includes(".m3u8")) || null;
-    const subUrl = urls.find((url) => url.includes(".vtt")) || null;
-    const m3u8 = !!streamUrl;
-    return { stream: streamUrl, sub: subUrl, m3u8 };
-  }
-
-  // Helper to see if we found any valid .m3u8 among servers
-  function didFindM3U8(serversObj) {
-    return Object.values(serversObj).some((server) => server.m3u8 === true);
-  }
-
-  // Reusable function to fetch a server’s HTML, look for obfuscated script, and extract .m3u8
-  async function processServer(serverUrl) {
-    try {
-      const serverResponse = await axios.get(serverUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9",
-          Referer: "https://dramacool.sh/",
-        },
-      });
-      const serverHtml = serverResponse.data;
-
-      // Step 4: Extract the targeted <script> content with cheerio
-      const $ = cheerio.load(serverHtml);
-      let scriptContent;
-      $("script").each((_, scriptTag) => {
-        const scriptData = $(scriptTag).html() || "";
-        if (scriptData.includes("eval(function(p,a,c,k,e,d)")) {
-          scriptContent = scriptData;
-          return false; // break out of loop
-        }
-      });
-
-      if (!scriptContent) {
-        // No obfuscated script found
-        return {
-          m3u8: false,
-          error: "Obfuscated script not found in server HTML.",
-        };
-      }
-
-      // Step 5: Extract parameters from the obfuscated code
-      const evalRegex =
-        /eval\(function\(p,a,c,k,e,d\)\{.*?\}\('(.+?)',(\d+),(\d+),'(.+?)'\.split\('\|'\)\)\)/;
-      const obfuscatedMatch = scriptContent.match(evalRegex);
-
-      if (!obfuscatedMatch) {
-        return {
-          m3u8: false,
-          error: "Failed to parse obfuscated code.",
-        };
-      }
-
-      const [
-        _,
-        obfuscatedCode,
-        deobfuscationKey,
-        arrayLength,
-        deobfuscationArray,
-      ] = obfuscatedMatch;
-
-      // Step 6: Deobfuscate the code
-      const deobfuscatedOutput = deobfuscateCode(
-        obfuscatedCode,
-        parseInt(deobfuscationKey, 10),
-        parseInt(arrayLength, 10),
-        deobfuscationArray.split("|")
-      );
-
-      // Step 7: Extract URLs
-      const urls = extractUrls(deobfuscatedOutput);
-
-      // Step 8: Find specific URLs and m3u8 presence
-      return findSpecificUrls(urls);
-    } catch (error) {
-      return {
-        m3u8: false,
-        error: `Error processing server: ${error.message}`,
-      };
-    }
-  }
-
-  // Initialize variables
+  // ── Parse params ────────────────────────────────────────────────────────────
   let apiKey = null;
   let episodeId = null;
-  let page = "1";
 
-  // Extract parameters based on request method
   if (request.method === "POST") {
-    // Parse JSON body for POST requests
-    const contentType = request.headers.get("Content-Type") || "";
-    if (contentType.includes("application/json")) {
-      try {
-        const body = await request.json();
-        apiKey = body.api_key;
-        episodeId = body.episode_id;
-        page = body.page || page;
-      } catch (err) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: "Invalid JSON body.",
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Unsupported Content-Type. Please use application/json.",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const ct = request.headers.get("Content-Type") || "";
+    if (!ct.includes("application/json")) {
+      return json({ success: false, message: "Use application/json" }, 400);
+    }
+    try {
+      const body = await request.json();
+      apiKey = body.api_key;
+      episodeId = body.episode_id;
+    } catch {
+      return json({ success: false, message: "Invalid JSON body" }, 400);
     }
   } else if (request.method === "GET") {
-    // Extract parameters from query string for GET requests
     const url = new URL(request.url);
     apiKey = url.searchParams.get("api_key");
     episodeId = url.searchParams.get("episode_id");
-    page = url.searchParams.get("page") || page;
   } else {
-    // Method not allowed
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Method not allowed. Use GET, POST, or OPTIONS.",
-      }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({ success: false, message: "Method not allowed" }, 405);
   }
 
-  // Validate API key
   if (!apiKey || !validateApiKey(apiKey, env)) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Invalid or missing API key. You can’t call this a drama API without the drama of finding your missing key!",
-        protip: "Missing API key? Join our Discord and claim yours—it’s free, and way better than staring at this error. 👉 https://discord.gg/cwDTVKyKJz",
-      }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      success: false,
+      message: "Invalid or missing API key.",
+      protip: "Join our Discord to get a free key → https://discord.gg/cwDTVKyKJz",
+    }, 401);
   }
 
-  // Check for required episode_id
   if (!episodeId) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Missing 'episode_id' query parameter.",
-      }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({ success: false, message: "Missing episode_id parameter" }, 400);
   }
 
+  // ── Scrape episode page ──────────────────────────────────────────────────────
   try {
-    // Step 1: Fetch the main episode page using axios
-    const episodeURL = `https://dramacool.sh/${encodeURIComponent(episodeId)}/`;
-    const episodeResponse = await axios.get(episodeURL, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-        Referer: "https://dramacool.sh/",
-      },
-    });
-    const episodeHtml = episodeResponse.data;
+    const { html: episodeHtml, finalUrl } = await fetchEpisodePage(episodeId);
 
-    // Step 2: Extract server URL from w-server div (more reliable than iframe)
-    const $ = cheerio.load(episodeHtml);
-    const serverUrl = $('#w-server .serverslist').attr('data-server');
-    
-    if (!serverUrl) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "No server URL found in w-server div.",
-          debug: {
-            w_server_found: $('#w-server').length > 0,
-            serverslist_found: $('#w-server .serverslist').length > 0,
-            data_server_attr: $('#w-server .serverslist').attr('data-server'),
-            all_data_servers: $('.serverslist').map((i, el) => $(el).attr('data-server')).get()
-          }
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // Extract top-level servers
+    const servers = extractServersFromHtml(episodeHtml, finalUrl);
 
-    // Clean up the server URL (remove extra spaces)
-    const cleanServerUrl = serverUrl.trim();
-
-    // Step 3: Fetch the server page to get the iframe
-    const serverResponse = await axios.get(cleanServerUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-        Referer: "https://dramacool.sh/",
-      },
-    });
-    const serverHtml = serverResponse.data;
-
-    // Step 4: Extract iframe source from the server page
-    const $server = cheerio.load(serverHtml);
-    
-    // Look for iframe that contains the actual server list
-    const iframeSelectors = [
-      'iframe[src*="vidbasic"]',
-      'iframe[src*="embed"]',
-      'iframe[src*="player"]',
-      'iframe'
-    ];
-    
-    let embedIframeSrc = null;
-    for (const selector of iframeSelectors) {
-      embedIframeSrc = $server(selector).attr('src');
-      if (embedIframeSrc) break;
-    }
-    
-    if (!embedIframeSrc) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "No embed iframe found in server page.",
-          server_url: cleanServerUrl,
-          debug: {
-            server_html_length: serverHtml.length,
-            server_html_snippet: serverHtml.substring(0, 500),
-            iframe_found: $server('iframe').length,
-            all_iframes: $server('iframe').map((i, el) => $server(el).attr('src')).get()
-          }
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Clean up the iframe src (handle relative URLs)
-    let cleanEmbedIframeSrc = embedIframeSrc.trim();
-    if (cleanEmbedIframeSrc.startsWith('/')) {
-      const baseUrl = new URL(cleanServerUrl).origin;
-      cleanEmbedIframeSrc = baseUrl + cleanEmbedIframeSrc;
-    }
-
-    // Step 5: Fetch the iframe content to get the actual server list
-    const embedResponse = await axios.get(cleanEmbedIframeSrc, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-        Referer: cleanServerUrl,
-      },
-    });
-    const embedHtml = embedResponse.data;
-
-    // Step 6: Extract server links from the embed iframe content
-    const $embed = cheerio.load(embedHtml);
-    const servers = {};
-
-    // Try multiple selectors to find the server list
-    const serverSelectors = [
-      '#list-server-more .list-server-items li.linkserver',
-      '.list-server-items li.linkserver',
-      'li.linkserver',
-      '.linkserver'
-    ];
-
-    let serversFound = false;
-    for (const selector of serverSelectors) {
-      $embed(selector).each((i, el) => {
-        const provider = ($embed(el).attr('data-provider') || '').toLowerCase().replace(/\s+/g, '');
-        const videoLink = $embed(el).attr('data-video') || '';
-        
-        if (provider && videoLink) {
-          // Handle relative URLs for standard server
-          let fullVideoLink = videoLink;
-          if (videoLink.startsWith('/')) {
-            const baseUrl = new URL(cleanEmbedIframeSrc).origin;
-            fullVideoLink = baseUrl + videoLink;
-          }
-          
-          servers[provider] = { 
-            embeded_link: fullVideoLink, 
-            m3u8: false,
-            provider_name: $embed(el).attr('data-provider') || provider
-          };
-          serversFound = true;
-        }
-      });
-      
-      if (serversFound) break; // Stop if we found servers with this selector
-    }
-
-    // If no servers found, return the embed iframe URL as fallback
     if (Object.keys(servers).length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: {
-            iframe_only: {
-              embeded_link: cleanEmbedIframeSrc,
-              m3u8: false,
-              provider_name: "Direct Embed Iframe",
-              embed_only: true
-            }
-          },
-          server_url: cleanServerUrl,
-          embed_iframe_url: cleanEmbedIframeSrc,
-          has_m3u8: false,
-          message: "No server list found in embed iframe, returning iframe URL",
-          debug: {
-            embed_html_length: embedHtml.length,
-            embed_html_snippet: embedHtml.substring(0, 500),
-            list_server_more_found: $embed('#list-server-more').length,
-            list_server_items_found: $embed('.list-server-items').length,
-            linkserver_elements_found: $embed('li.linkserver').length,
-            all_li_elements: $embed('li').map((i, el) => ({
-              class: $embed(el).attr('class'),
-              data_provider: $embed(el).attr('data-provider'),
-              data_video: $embed(el).attr('data-video'),
-              text: $embed(el).text().trim()
-            })).get()
-          }
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({
+        success: false,
+        error: "No servers found on episode page.",
+        episode_url: finalUrl,
+        debug: { html_length: episodeHtml.length, snippet: episodeHtml.substring(0, 300) },
+      }, 400);
     }
 
-    // Step 7: Process each server link, excluding doodstream, mixdrop, and mp4upload
-    for (const [serverName, serverData] of Object.entries(servers)) {
-      if (["doodstream", "mixdrop", "mp4upload"].includes(serverName)) {
-        servers[serverName].skipped = true;
-        servers[serverName].m3u8 = false; // Explicitly set m3u8 to false
+    const SKIP = ["doodstream", "mixdrop", "mp4upload"];
+    let embedUrl = null;
+
+    // ── Process each top-level server ────────────────────────────────────────
+    for (const [name, data] of Object.entries(servers)) {
+      if (SKIP.includes(name)) {
+        servers[name].skipped = true;
         continue;
       }
 
-      // Attempt to fetch and process the server
-      const result = await processServer(serverData.embeded_link);
-      if (result.stream) servers[serverName].stream = result.stream;
-      if (result.sub) servers[serverName].sub = result.sub;
-      if (typeof result.m3u8 !== "undefined")
-        servers[serverName].m3u8 = result.m3u8;
-      if (result.error) servers[serverName].error = result.error;
+      // For "standard" server: expand into sub-servers
+      if (name === "standard") {
+        const { subServers, embedUrl: eu } = await fetchSubServers(data.embeded_link, null);
+        if (!embedUrl) embedUrl = eu;
+
+        for (const [subName, subData] of Object.entries(subServers)) {
+          if (SKIP.includes(subName)) {
+            servers[subName] = { ...subData, skipped: true };
+            continue;
+          }
+          const result = await processServer(subData.embeded_link);
+          servers[subName] = { ...subData, ...result };
+          if (result.stream) servers[subName].stream = result.stream;
+        }
+        // Also try to extract m3u8 from the standard server itself
+        const stdResult = await processServer(data.embeded_link);
+        if (stdResult.stream) { servers[name].stream = stdResult.stream; servers[name].m3u8 = true; }
+        continue;
+      }
+
+      const result = await processServer(data.embeded_link);
+      if (result.stream) servers[name].stream = result.stream;
+      if (result.sub) servers[name].sub = result.sub;
+      servers[name].m3u8 = result.m3u8 ?? false;
+      if (result.error) servers[name].error = result.error;
+      if (!embedUrl) embedUrl = data.embeded_link;
     }
 
-    // Check if we've found any .m3u8 from the above servers
-    const foundAnyM3U8 = didFindM3U8(servers);
+    const has_m3u8 = Object.values(servers).some((s) => s.m3u8 === true);
 
-    // If no .m3u8 found, return all embed links
-    if (!foundAnyM3U8) {
-      // Add a flag to indicate that these are embed links without m3u8
-      for (const [serverName, serverData] of Object.entries(servers)) {
-        if (!serverData.skipped && !serverData.m3u8) {
-          servers[serverName].embed_only = true;
-        }
+    // Mark embed-only servers
+    if (!has_m3u8) {
+      for (const [name, data] of Object.entries(servers)) {
+        if (!data.skipped && !data.m3u8) servers[name].embed_only = true;
       }
     }
 
-    // Return the results
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: servers,
-        server_url: cleanServerUrl,
-        embed_iframe_url: cleanEmbedIframeSrc,
-        has_m3u8: foundAnyM3U8
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      success: true,
+      data: servers,
+      episode_url: finalUrl,
+      embed_iframe_url: embedUrl,
+      has_m3u8,
+    });
+
   } catch (error) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: `Error processing episode ID: ${error.message}`,
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      success: false,
+      error: error.message,
+      episode_id: episodeId,
+      hint: "The episode page may not exist on dramacool.sh. Check that the episode_id is correct.",
+    }, 500);
   }
+}
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
 }
