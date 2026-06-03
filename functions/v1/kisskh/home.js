@@ -1,119 +1,107 @@
 import * as cheerio from "cheerio";
 import axios from "axios";
 
-export async function onRequest() {
-  try {
-    // Fetch the HTML content of the website
-    const response = await axios.get("https://kisskh.asia/");
-    const html = response.data;
+const BASE = "https://kisskh.dk";
 
-    // Load the HTML into cheerio
+function validateApiKey(apiKey, env) {
+  return (env.API_KEYS || "").split(",").map(k => k.trim()).includes(apiKey);
+}
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400",
+};
+
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept-Language": "en-US,en;q=0.9",
+  Referer: BASE + "/",
+};
+
+export async function onRequest({ request, env }) {
+  if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
+
+  try {
+    let apiKey;
+    if (request.method === "POST") {
+      const body = await request.json();
+      apiKey = body.api_key;
+    } else {
+      apiKey = new URL(request.url).searchParams.get("api_key");
+    }
+
+    if (!apiKey || !validateApiKey(apiKey, env)) {
+      return new Response(JSON.stringify({ success: false, message: "Invalid or missing API key." }), { status: 401, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+
+    const { data: html } = await axios.get(BASE + "/", { headers: HEADERS });
     const $ = cheerio.load(html);
 
-    // Initialize arrays to store "Latest Release", "Recommendation", and "Popular Drama" data
+    // Latest Releases
     const latestReleases = [];
-    const recommendations = [];
-    const popularDrama = {
-      weekly: [],
-      monthly: [],
-      alltime: []
-    };
-
-    // Extract "Latest Release" section
-    $(".bixbox .listupd .excstf article").each((_, element) => {
-      const title = $(element).find(".tt h2").text().trim();
-      const link = $(element).find(".bsx > a").attr("href");
-      const image = $(element).find(".bsx img").attr("src");
-      const episode = $(element).find(".bt .epx").text().trim();
-      const subtitle = $(element).find(".bt .sb").text().trim();
-      const status = $(element).find(".limit .status").text().trim() || "Ongoing";
-
+    $(".bixbox .listupd .excstf article").each((_, el) => {
       latestReleases.push({
-        title,
-        link,
-        image,
-        status,
-        episode,
-        subtitle,
+        title: $(el).find(".tt h2").text().trim(),
+        link: $(el).find(".bsx > a").attr("href"),
+        image: $(el).find(".bsx img").attr("src") || $(el).find(".bsx img").attr("data-src"),
+        status: $(el).find(".limit .status").text().trim() || "Ongoing",
+        episode: $(el).find(".bt .epx").text().trim(),
+        subtitle: $(el).find(".bt .sb").text().trim(),
       });
     });
 
-    // Extract "Recommendation" section by genre
-    $(".series-gen .nav-tabs li").each((_, tab) => {
+    // Recommendations by genre
+    const recommendations = [];
+    $(".ts-wpop-series-gen .ts-wpop-nav-tabs li").each((_, tab) => {
       const genreName = $(tab).find("a").text().trim();
-      const genreId = $(tab).find("a").attr("href").replace("#", "");
-      const genreRecommendations = [];
+      const href = $(tab).find("a").attr("href") || "";
+      const genreId = href.replace("#", "");
+      const genreRecs = [];
 
-      $(`#${genreId} article`).each((_, element) => {
-        const title = $(element).find(".tt h2").text().trim();
-        const link = $(element).find(".bsx > a").attr("href");
-        const image = $(element).find(".bsx img").attr("src");
-        const status = $(element).find(".bt .epx").text().trim() || "Ongoing";
-        const subtitle = $(element).find(".bt .sb").text().trim();
-
-        genreRecommendations.push({
-          title,
-          link,
-          image,
-          status,
-          subtitle,
+      $(`#${genreId} article`).each((_, el) => {
+        genreRecs.push({
+          title: $(el).find(".tt h2").text().trim(),
+          link: $(el).find(".bsx > a").attr("href"),
+          image: $(el).find(".bsx img").attr("src") || $(el).find(".bsx img").attr("data-src"),
+          status: $(el).find(".bt .epx").text().trim() || "Ongoing",
+          subtitle: $(el).find(".bt .sb").text().trim(),
         });
       });
 
-      if (genreRecommendations.length > 0) {
-        recommendations.push({
-          [genreName]: genreRecommendations,
-        });
+      if (genreRecs.length > 0 && genreName) {
+        recommendations.push({ [genreName]: genreRecs });
       }
     });
 
-    // Extract "Popular Drama" section
-    $(".serieslist.pop.wpop").each((_, section) => {
-      const range = $(section).attr("class").split(" ").find((cls) => cls.startsWith("wpop-")).replace("wpop-", "");
+    // Popular Drama
+    const popularDrama = { weekly: [], monthly: [], alltime: [] };
+    $(".serieslist.pop.wpop, .serieslist.pop.ts-wpop").each((_, section) => {
+      const cls = $(section).attr("class") || "";
+      let range = "weekly";
+      if (cls.includes("wpop-monthly") || cls.includes("ts-wpop-monthly")) range = "monthly";
+      else if (cls.includes("wpop-alltime") || cls.includes("ts-wpop-alltime")) range = "alltime";
 
-      $(section).find("li").each((_, element) => {
-        const rank = $(element).find(".ctr").text().trim();
-        const title = $(element).find(".leftseries h4 a").text().trim();
-        const link = $(element).find(".imgseries a").attr("href");
-        const image = $(element).find(".imgseries img").attr("src");
-        const genres = [];
-
-        $(element).find(".leftseries span a").each((_, genre) => {
-          genres.push($(genre).text().trim());
-        });
-
-        const rating = $(element).find(".numscore").text().trim() || null;
-
+      $(section).find("li").each((_, el) => {
         popularDrama[range].push({
-          rank,
-          title,
-          link,
-          image,
-          genres,
-          rating,
+          rank: $(el).find(".ctr").text().trim(),
+          title: $(el).find(".leftseries h4 a").text().trim(),
+          link: $(el).find(".imgseries a").attr("href"),
+          image: $(el).find(".imgseries img").attr("src") || $(el).find(".imgseries img").attr("data-src"),
+          genres: $(el).find(".leftseries span a").map((_, g) => $(g).text().trim()).get(),
+          rating: $(el).find(".numscore").text().trim() || null,
         });
       });
     });
 
-    // Return the data in the desired JSON structure
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          latest_release: latestReleases,
-          recommendation: recommendations,
-          popular_drama: popularDrama,
-        },
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("Error fetching or parsing the website:", error);
+    return new Response(JSON.stringify({
+      success: true,
+      data: { latest_release: latestReleases, recommendation: recommendations, popular_drama: popularDrama },
+    }), { headers: { ...CORS, "Content-Type": "application/json" } });
 
-    // Return an error response
-    return new Response(
-      JSON.stringify({ success: false, error: "Failed to fetch data." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  } catch (e) {
+    console.error(e);
+    return new Response(JSON.stringify({ success: false, error: "Failed to fetch data." }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
   }
 }

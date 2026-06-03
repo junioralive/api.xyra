@@ -2,6 +2,14 @@
     "name": "xyra-api",
     "version": "1.0.0",
     "main": "functions/api/doc.js",
+    "scripts": {
+        "dev": "wrangler pages dev public",
+        "deploy": "wrangler pages deploy public",
+        "audit": "npm audit"
+    },
+    "engines": {
+        "node": ">=22"
+    },
     "dependencies": {
         "axios": "^1.7.9",
         "cheerio": "^1.0.0",

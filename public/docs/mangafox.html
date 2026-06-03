@@ -1,22 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 - Page Not Found | Xyra API</title>
+  <title>MangaFox API Documentation | Xyra</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body {
-      background-color: #000000;
-      font-family: 'Inter', sans-serif;
-    }
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+    body { background-color: #000000; font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
     .glass-pill {
       background: rgba(10, 10, 10, 0.75);
       backdrop-filter: blur(24px);
@@ -24,24 +17,12 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
-    .fade-in {
-      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .float {
-      animation: float 4s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
-    }
+    .code-block { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="text-zinc-400 antialiased min-h-screen flex flex-col px-6">
+<body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white">
 
   <!-- Unified Floating Pill Top Bar -->
   <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
@@ -65,34 +46,28 @@
     </div>
   </nav>
 
-  <div class="flex-1 flex flex-col items-center justify-center text-center max-w-md fade-in mx-auto">
-    <!-- Monochrome Ghost Icon -->
-    <div class="w-24 h-24 mx-auto mb-8 float relative">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-white">
-        <path d="M12 2C7.58172 2 4 5.58172 4 10V22L7 19L10 22L13 19L16 22L19 19L20 20V10C20 5.58172 16.4183 2 12 2Z" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.5"/>
-        <circle cx="9" cy="10" r="1.5" fill="currentColor"/>
-        <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
-        <path d="M10 14C10 14 11 15 12 15C13 15 14 14 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
+  <main class="flex-1 pt-32 px-6 lg:px-12 max-w-4xl mx-auto fade-in">
+    <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">MangaFox Provider</h1>
+    <p class="text-zinc-400 mb-8 font-light text-lg">A reliable fallback provider for manga home feeds, latest updates, and detailed metadata.</p>
+    
+    <div class="space-y-6">
+      <div class="glass-panel rounded-xl p-6">
+        <h2 class="text-xl font-semibold text-white mb-3">Home</h2>
+        <p class="text-zinc-400 text-sm mb-4">Fetch the latest updates and popular titles from MangaFox.</p>
+        <div class="code-block rounded-lg p-4 font-mono text-sm">
+          <code class="text-white font-semibold">GET</code> <code class="text-zinc-400">/v1/mangafox/home?api_key=YOUR_KEY</code>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-6">
+        <h2 class="text-xl font-semibold text-white mb-3">Manga Info</h2>
+        <p class="text-zinc-400 text-sm mb-4">Retrieve detailed metadata, description, and the chapter list for a specific manga.</p>
+        <div class="code-block rounded-lg p-4 font-mono text-sm">
+          <code class="text-white font-semibold">GET</code> <code class="text-zinc-400">/v1/mangafox/info?api_key=YOUR_KEY&id={manga-id}</code>
+        </div>
+      </div>
     </div>
-
-    <h1 class="text-6xl font-bold text-white mb-4 tracking-tight">404</h1>
-    <h2 class="text-xl font-medium text-white mb-3">Page Not Found</h2>
-    <p class="text-zinc-500 mb-8 leading-relaxed">
-      The ghost of this page is busy scaring away bugs in the code. It seems to be ghosting us both.
-    </p>
-
-    <a href="/" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white text-black font-medium text-sm hover:bg-zinc-200 transition-colors">
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-      Take Me Home
-    </a>
-  </div>
-
-  <footer class="absolute bottom-8 text-center fade-in" style="animation-delay: 0.2s;">
-    <p class="text-xs text-zinc-700">
-      Made by <span class="text-zinc-500">junioralive</span>. If you're still lost, try asking the ghost.
-    </p>
-  </footer>
+  </main>
 
 </body>
 </html>

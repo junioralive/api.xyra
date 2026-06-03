@@ -1,180 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Xyra API</title>
+  <title>Xyra API - Welcome</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      min-height: 100vh;
-      background: linear-gradient(to bottom right, #f0f0f0, #d3d3d3);
-      color: black;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      overflow-x: hidden;
+      background-color: #000000;
+      font-family: 'Inter', sans-serif;
     }
-    .main {
-      max-width: 90%;
-      margin: auto;
-      text-align: center;
-      animation: fadeIn 2s ease-in-out;
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
     }
-    .header {
-      font-size: 3rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(to right, #6a5acd, #483d8b);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: zoomIn 1.5s ease-in-out;
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .muted {
-      color: #7d7d7d;
-      font-size: 1.2rem;
-      animation: fadeIn 3s ease-in-out;
+    .glass-pill {
+      background: rgba(10, 10, 10, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      margin: 16px auto;
-      animation: slideUp 1.5s ease-in-out;
+    .glass-nav {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 24px;
-      background-color: #5865F2;
-      color: white;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    .button:hover {
-      background-color: #4752C4;
-    }
-    .button-icon {
-      margin-right: 8px;
-    }
-    .documentation-button {
-      background: linear-gradient(to right, #6a5acd, #483d8b);
-      color: white;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      padding: 12px 24px;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-    .documentation-button:hover {
-      background: linear-gradient(to right, #483d8b, #6a5acd);
-      transform: scale(1.05);
-    }
-    .small-text {
-      font-size: 0.875rem;
-      color: #7d7d7d;
-    }
-    .footer {
-      margin-top: 2rem;
-      font-size: 0.875rem;
-      color: #7d7d7d;
-      animation: fadeInUp 2s ease-in-out;
-    }
-    .funny-text {
-      margin-top: 1rem;
-      font-size: 1rem;
-      color: #585858;
-      background-color: #fefcfc;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
-      animation: bounce 1.5s infinite;
+    .fade-in {
+      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
     }
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes zoomIn {
-      from {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-    @keyframes slideUp {
-      from {
-        transform: translateY(50px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-    @keyframes fadeInUp {
-      from {
-        transform: translateY(20px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
   </style>
 </head>
-<body>
-  <main class="main">
-    <h1 class="header">Welcome to Xyra API</h1>
-    <div class="muted">🔒 Currently in closed beta - not for public use</div>
-    <div class="card">
-      <h2>Why do you need an API when Xyra is free? 🤔</h2>
-      <Sure,>We get it - you're a developer and you love to build cool stuff! But remember, Xyra is already free and awesome to use directly! <br> Sure, go ahead! It’s not like we’ve been guarding it like a dragon hoards treasure or anything… okay, maybe just a little. 🐉</p>
-      <button class="button documentation-button" onclick="window.location.href='/doc'">
-        Visit Documentation
-      </button>
+<body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white min-h-screen flex flex-col">
+
+  <!-- Unified Floating Pill Top Bar -->
+  <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
+    <a href="/" class="flex items-center gap-2 group flex-shrink-0">
+      <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
+      <span class="font-semibold text-white text-sm tracking-tight hidden sm:block">YRA</span>
+    </a>
+    
+    <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
+    
+    <div class="flex-1 relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input 
+        type="text" 
+        placeholder="Search providers..." 
+        onkeydown="if(event.key==='Enter') window.location.href='/doc.html?q='+this.value"
+        class="w-full bg-transparent border-none text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-0 pl-9 pr-4 py-1.5"
+      >
     </div>
-    <div class="card">
-      <h2>Want API access?</h2>
-      <p>If you're really determined to use our API (we admire your enthusiasm!), hop into our Discord and let's chat about it!</p>
-      <button class="button" onclick="window.open('https://discord.gg/cwDTVKyKJz', '_blank')">
-        Join our Discord
-      </button>
+    
+    <div class="flex items-center gap-4 flex-shrink-0">
+      <a href="/doc.html" class="text-xs font-medium text-zinc-400 hover:text-white transition-colors hidden sm:block">Docs</a>
+      <a href="https://github.com/junioralive/xyra-api" target="_blank" class="text-zinc-500 hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.1.82-.26.82-.58v-2.04c-3.34.72-4.05-1.6-4.05-1.6a3.18 3.18 0 0 0-1.35-1.78c-1.11-.74.08-.73.08-.73a2.53 2.53 0 0 1 1.85 1.23 2.57 2.57 0 0 0 3.49 1 2.6 2.6 0 0 1 .77-1.62C6.48 16.91 3.94 15.9 3.94 11.8a4.6 4.6 0 0 1 1.22-3.2 4.29 4.29 0 0 1 .11-3.15s1-.31 3.26 1.21a11.08 11.08 0 0 1 5.94 0c2.3-1.53 3.26-1.21 3.26-1.21a4.3 4.3 0 0 1 .11 3.15 4.6 4.6 0 0 1 1.22 3.2c0 4.1-2.55 5.11-4.98 5.37a2.89 2.89 0 0 1 .82 2.24v3.34c0 .32.22.69.82.58A12 12 0 0 0 12 .5Z"/></svg>
+      </a>
+      <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="text-zinc-500 hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Zm-12.12 9.584c-1.182 0-2.156-1.08-2.156-2.408 0-1.327.955-2.408 2.156-2.408 1.21 0 2.175 1.1 2.156 2.408 0 1.328-.955 2.408-2.156 2.408Zm7.609 0c-1.182 0-2.156-1.08-2.156-2.408 0-1.327.955-2.408 2.156-2.408 1.21 0 2.175 1.1 2.156 2.408 0 1.328-.946 2.408-2.156 2.408Z"/></svg>
+      </a>
     </div>
-    <p class="small-text">
-      PS: Want our API? Just ask! No riddles, no quests, just good old-fashioned "please." 😄
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-32 max-w-3xl mx-auto text-center">
+    
+    <div class="fade-in mb-8">
+      <span class="inline-block px-3 py-1 rounded-full bg-white/5 text-zinc-400 text-xs font-medium border border-white/10 mb-6">Currently in Closed Beta</span>
+      <h1 class="text-5xl md:text-6xl font-bold text-white tracking-tight mb-6">Welcome to Xyra API</h1>
+      <p class="text-xl text-zinc-400 font-light leading-relaxed max-w-2xl mx-auto">
+        A high-performance, scraping-based REST API designed to serve metadata, streaming links, and images for manga, anime, and dramas.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full fade-in delay-1">
+      <!-- Card 1 -->
+      <div class="glass-panel rounded-2xl p-8 text-left hover:bg-white/[0.04] transition-colors duration-300">
+        <h2 class="text-lg font-semibold text-white mb-3">Why use the API?</h2>
+        <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+          While Xyra is awesome to use directly, developers love building custom experiences. We provide the raw, structured data you need to build your own apps, bots, or integrations.
+        </p>
+        <a href="/doc.html" class="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-white text-black font-medium text-sm hover:bg-zinc-200 transition-colors">
+          View Documentation
+        </a>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="glass-panel rounded-2xl p-8 text-left hover:bg-white/[0.04] transition-colors duration-300">
+        <h2 class="text-lg font-semibold text-white mb-3">Request API Access</h2>
+        <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+          Admire our enthusiasm? We admire yours. API keys are currently distributed via our community. Hop into Discord and let's chat about your use case.
+        </p>
+        <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl glass-panel text-white font-medium text-sm hover:bg-white/10 transition-colors border border-white/10">
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Zm-12.12 9.584c-1.182 0-2.156-1.08-2.156-2.408 0-1.327.955-2.408 2.156-2.408 1.21 0 2.175 1.1 2.156 2.408 0 1.328-.955 2.408-2.156 2.408Zm7.609 0c-1.182 0-2.156-1.08-2.156-2.408 0-1.327.955-2.408 2.156-2.408 1.21 0 2.175 1.1 2.156 2.408 0 1.328-.946 2.408-2.156 2.408Z"/></svg>
+          Join Discord
+        </a>
+      </div>
+    </div>
+
+    <p class="mt-12 text-xs text-zinc-600 fade-in delay-2">
+      No riddles, no quests. Just good old-fashioned "please."
     </p>
-    <p class="funny-text">Pro tip: If you stare at this breathing box long enough, you might hear it whisper, “Let’s code!”</p>
+
   </main>
-  <footer class="footer">
-    © 2025 Xyra API - JuniorAlive was here. The bugs weren’t supposed to be. They just followed him.
+
+  <!-- Footer -->
+  <footer class="py-8 text-center border-t border-white/5 fade-in delay-3">
+    <p class="text-xs text-zinc-600">
+      © 2025 Xyra API. Built by <span class="text-zinc-400">junioralive</span>. 
+    </p>
   </footer>
+
 </body>
 </html>

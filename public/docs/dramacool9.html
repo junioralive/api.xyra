@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dramacool9 API Documentation | Xyra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #000000; font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-pill {
+      background: rgba(10, 10, 10, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .code-block { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .nav-link { transition: all 0.2s ease; border-left: 2px solid transparent; }
+    .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
+    .nav-link.active { background: rgba(255, 255, 255, 0.08); color: #ffffff; border-left: 2px solid #ffffff; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .json-key { color: #7dd3fc; }
+    .json-str { color: #a5d6a7; }
+    .json-num { color: #ffcc80; }
+    .json-bool { color: #ce93d8; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+  </style>
+</head>
+<body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white">
+
+  <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
+    <a href="/doc.html" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition-colors flex-shrink-0" title="Back to Docs">
+      <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <a href="/" class="flex items-center gap-2 group flex-shrink-0">
+      <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
+      <span class="font-semibold text-white text-sm tracking-tight hidden sm:block">YRA</span>
+    </a>
+    <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
+    <div class="flex-1 relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" placeholder="Search providers..." onkeydown="if(event.key==='Enter') window.location.href='/doc.html?q='+this.value" class="w-full bg-transparent border-none text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-0 pl-9 pr-4 py-1.5">
+    </div>
+    <div class="flex items-center gap-4 flex-shrink-0">
+      <a href="/doc.html" class="text-xs font-medium text-zinc-400 hover:text-white transition-colors hidden sm:block">Docs</a>
+      <a href="https://github.com/junioralive/xyra-api" target="_blank" class="text-zinc-500 hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.1.82-.26.82-.58v-2.04c-3.34.72-4.05-1.6-4.05-1.6a3.18 3.18 0 0 0-1.35-1.78c-1.11-.74.08-.73.08-.73a2.53 2.53 0 0 1 1.85 1.23 2.57 2.57 0 0 0 3.49 1 2.6 2.6 0 0 1 .77-1.62C6.48 16.91 3.94 15.9 3.94 11.8a4.6 4.6 0 0 1 1.22-3.2 4.29 4.29 0 0 1 .11-3.15s1-.31 3.26 1.21a11.08 11.08 0 0 1 5.94 0c2.3-1.53 3.26-1.21 3.26-1.21a4.3 4.3 0 0 1 .11 3.15 4.6 4.6 0 0 1 1.22 3.2c0 4.1-2.55 5.11-4.98 5.37a2.89 2.89 0 0 1 .82 2.24v3.34c0 .32.22.69.82.58A12 12 0 0 0 12 .5Z"/></svg>
+      </a>
+      <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="text-zinc-500 hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Z"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <div class="flex pt-24">
+    <aside class="fixed left-6 top-24 w-64 h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-6 hidden lg:block">
+      <h3 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6">Endpoints</h3>
+      <div class="space-y-1">
+        <a href="#d9-home" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Home</a>
+        <a href="#d9-search" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Search</a>
+        <a href="#d9-info" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Details & Info</a>
+        <a href="#d9-stream" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Stream / Episode</a>
+        <a href="#d9-list" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">List & Browse</a>
+        <a href="#d9-discover" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Discover</a>
+      </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-[17.5rem] xl:mr-[19rem] p-6 lg:p-12 max-w-4xl mx-auto">
+
+      <!-- HOME -->
+      <section id="d9-home" class="mb-20 fade-in">
+        <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">Dramacool9 Provider</h1>
+        <p class="text-zinc-400 mb-12 font-light text-lg">API for dramacool9.com.ro — Kdramas, K-shows, search, details, streaming links, and filtered discovery.</p>
+
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Home</h2>
+        <p class="text-zinc-400 mb-6 font-light">Fetch drama and K-show listings from the homepage, plus ongoing series and discovery filter metadata.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/home?api_key=YOUR_KEY</span>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"drama"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"image"</span>: <span class="json-str">"string | null"</span>,
+      <span class="json-key">"episode"</span>: <span class="json-str">"string | null"</span>,
+      <span class="json-key">"time"</span>: <span class="json-str">"string | null"</span>
+    }],
+    <span class="json-key">"kshow"</span>: [ ... ],
+    <span class="json-key">"ongoing"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>
+    }],
+    <span class="json-key">"countries"</span>: [{
+      <span class="json-key">"name"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"slug"</span>: <span class="json-str">"string"</span>
+    }],
+    <span class="json-key">"genres"</span>: [{ <span class="json-key">"name"</span>: <span class="json-str">"string"</span>, <span class="json-key">"slug"</span>: <span class="json-str">"string"</span> }]
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- SEARCH -->
+      <section id="d9-search" class="mb-20 fade-in delay-1">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Search</h2>
+        <p class="text-zinc-400 mb-6 font-light">Search for dramas by title with pagination support.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/search?api_key=YOUR_KEY&query=vincenzo&page=1</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th>
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Type</th>
+                  <th class="py-2 text-zinc-500 font-medium">Required</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">query</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
+                <tr><td class="py-2 pr-6 text-white">page</td><td class="py-2 pr-6">number</td><td class="py-2 text-zinc-500">No</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"query"</span>: <span class="json-str">"string"</span>,
+  <span class="json-key">"page"</span>: <span class="json-num">1</span>,
+  <span class="json-key">"data"</span>: [{
+    <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"image"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"time"</span>: <span class="json-str">"string | null"</span>
+  }],
+  <span class="json-key">"pagination"</span>: {
+    <span class="json-key">"hasNext"</span>: <span class="json-bool">true</span>,
+    <span class="json-key">"hasPrev"</span>: <span class="json-bool">false</span>,
+    <span class="json-key">"maxPage"</span>: <span class="json-num">5</span>
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- INFO -->
+      <section id="d9-info" class="mb-20 fade-in delay-2">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Details & Info</h2>
+        <p class="text-zinc-400 mb-6 font-light">Retrieve drama metadata including synopsis, genres, cast, and a complete episode list. Scraped from the first episode page since this site embeds details there.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/info?api_key=YOUR_KEY&id=vincenzo-2021</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th>
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Type</th>
+                  <th class="py-2 text-zinc-500 font-medium">Required</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr><td class="py-2 pr-6 text-white">id</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"title"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"thumbnail"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"synopsis"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"other_name"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"country"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"status"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"release_year"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"genres"</span>: [<span class="json-str">"string"</span>],
+    <span class="json-key">"starring"</span>: [<span class="json-str">"string"</span>],
+    <span class="json-key">"trailer"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"episodes"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"episode_id"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"time"</span>: <span class="json-str">"string | null"</span>
+    }]
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- STREAM -->
+      <section id="d9-stream" class="mb-20 fade-in">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Stream / Episode</h2>
+        <p class="text-zinc-400 mb-6 font-light">Fetch streaming embeds and attempt m3u8 extraction for a specific episode.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/stream?api_key=YOUR_KEY&episode_id=vincenzo-2021-episode-1</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th>
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Type</th>
+                  <th class="py-2 text-zinc-500 font-medium">Required</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr><td class="py-2 pr-6 text-white">episode_id</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"thumbnail"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"servers"</span>: {
+      <span class="json-key">"Fast Server"</span>: {
+        <span class="json-key">"embeded_link"</span>: <span class="json-str">"string"</span>,
+        <span class="json-key">"m3u8"</span>: <span class="json-bool">false</span>,
+        <span class="json-key">"embed_only"</span>: <span class="json-bool">true</span>
+      }
+    },
+    <span class="json-key">"navigation"</span>: {
+      <span class="json-key">"prev"</span>: <span class="json-str">"string | null"</span>,
+      <span class="json-key">"next"</span>: <span class="json-str">"string | null"</span>
+    }
+  },
+  <span class="json-key">"episode_url"</span>: <span class="json-str">"string"</span>,
+  <span class="json-key">"has_m3u8"</span>: <span class="json-bool">false</span>
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section id="d9-list" class="mb-20 fade-in delay-1">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> List & Browse</h2>
+        <p class="text-zinc-400 mb-6 font-light">Browse dramas filtered by country or genre with pagination.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/list?api_key=YOUR_KEY&country=south-korea&page=1</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th>
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Type</th>
+                  <th class="py-2 text-zinc-500 font-medium">Required</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">country</td><td class="py-2 pr-6">string</td><td class="py-2 text-zinc-500">No</td></tr>
+                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">genre</td><td class="py-2 pr-6">string</td><td class="py-2 text-zinc-500">No</td></tr>
+                <tr><td class="py-2 pr-6 text-white">page</td><td class="py-2 pr-6">number</td><td class="py-2 text-zinc-500">No</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: [{
+    <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"image"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"episode"</span>: <span class="json-str">"string | null"</span>,
+    <span class="json-key">"time"</span>: <span class="json-str">"string | null"</span>
+  }],
+  <span class="json-key">"pagination"</span>: {
+    <span class="json-key">"nextpage"</span>: <span class="json-bool">true</span>,
+    <span class="json-key">"prevpage"</span>: <span class="json-bool">false</span>,
+    <span class="json-key">"maxpage"</span>: <span class="json-num">10</span>
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- DISCOVER -->
+      <section id="d9-discover" class="mb-32 fade-in delay-2">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Discover & Popular</h2>
+        <p class="text-zinc-400 mb-6 font-light">Filtered discovery and popular dramas list with available filter metadata.</p>
+
+        <div class="mb-8">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Popular Dramas</h3>
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/popular?api_key=YOUR_KEY&page=1</span>
+          </div>
+        </div>
+
+        <div class="mb-8">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Filtered Discovery</h3>
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/discover?api_key=YOUR_KEY&country=south-korea&genre=comedy&page=1</span>
+          </div>
+          <div class="overflow-x-auto mb-4">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th>
+                  <th class="py-2 pr-6 text-zinc-500 font-medium">Type</th>
+                  <th class="py-2 text-zinc-500 font-medium">Required</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">country</td><td class="py-2 pr-6">string</td><td class="py-2 text-zinc-500">No</td></tr>
+                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">genre</td><td class="py-2 pr-6">string</td><td class="py-2 text-zinc-500">No</td></tr>
+                <tr><td class="py-2 pr-6 text-white">page</td><td class="py-2 pr-6">number</td><td class="py-2 text-zinc-500">No</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mb-8">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Discovery Filters Reference</h3>
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/dramacool9/discover-info?api_key=YOUR_KEY</span>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"countries"</span>: [
+      { <span class="json-key">"name"</span>: <span class="json-str">"South Korea"</span>, <span class="json-key">"slug"</span>: <span class="json-str">"south-korea"</span> },
+      ...
+    ],
+    <span class="json-key">"genres"</span>: [
+      { <span class="json-key">"name"</span>: <span class="json-str">"Comedy"</span>, <span class="json-key">"slug"</span>: <span class="json-str">"comedy"</span> },
+      ...
+    ]
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="fixed right-6 top-24 w-72 h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-6 hidden xl:block">
+      <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-5">API Tree</h3>
+      <div class="space-y-0.5 font-mono text-xs">
+        <div>
+          <a href="#d9-home" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/home</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">drama[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">kshow[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">ongoing[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">countries[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">genres[]</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-search" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/search</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">pagination</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-info" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/info</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">genres[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">starring[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">episodes[]</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-stream" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/stream</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">servers</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">has_m3u8</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-list" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/list</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">country | genre</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-discover" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/discover</span>
+          </a>
+        </div>
+        <div class="mt-3">
+          <a href="#d9-discover" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span>
+            <span class="text-white">/popular</span>
+          </a>
+        </div>
+      </div>
+      <div class="mt-8 pt-5 border-t border-white/10">
+        <div class="glass-panel rounded-lg p-3 text-center">
+          <p class="text-xs text-zinc-500 mb-2">Need help?</p>
+          <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-xs text-white border border-white/10">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Z"/></svg>
+            Join Discord
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    function updateActiveLink() {
+      let current = '';
+      const scrollPos = scrollY + window.innerHeight / 2;
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+          current = section.getAttribute('id');
+        }
+      });
+      if (window.innerHeight + scrollY >= document.body.offsetHeight - 100) {
+        current = sections[sections.length - 1].getAttribute('id');
+      }
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (current && link.getAttribute('href').includes(current)) {
+          link.classList.add('active');
+        }
+      });
+    }
+    window.addEventListener('scroll', updateActiveLink);
+    window.addEventListener('load', updateActiveLink);
+  </script>
+</body>
+</html>

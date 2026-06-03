@@ -91,7 +91,9 @@ export async function onRequest({ request, env }) {
         // Extract drama details inside #primary.wrapper
         $("#primary .box li").each((_, element) => {
             const title = $(element).find("h3").text().trim();
-            let id = $(element).find("a").attr("href");
+            let id = $(element).find("a").attr("href")
+                .replace("https://dramacool.sh", "")
+                .replace(/\//g, "");
             const image = $(element).find("img").attr("data-original") || $(element).find("img").attr("src");
             const episode = $(element).find(".ep").text().trim();
             const time = $(element).find(".time").text().trim();
