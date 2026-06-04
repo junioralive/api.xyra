@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MangaFox API Documentation | Xyra</title>
+  <title>KissKH API Documentation | Xyra</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -64,26 +64,25 @@
     <aside class="fixed left-6 top-24 w-64 h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-6 hidden lg:block">
       <h3 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6">Endpoints</h3>
       <div class="space-y-1">
-        <a href="#mf-home" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Home</a>
-        <a href="#mf-search" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Search</a>
-        <a href="#mf-info" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Manga Info</a>
-        <a href="#mf-chapter" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Chapter Reader</a>
+        <a href="#kkh-home" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Home</a>
+        <a href="#kkh-search" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Search</a>
+        <a href="#kkh-info" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Series Info</a>
+        <a href="#kkh-stream" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Stream</a>
       </div>
     </aside>
 
     <main class="flex-1 lg:ml-[17.5rem] xl:mr-[19rem] p-6 lg:p-12 max-w-4xl mx-auto">
 
-      <!-- HOME -->
-      <section id="mf-home" class="mb-20 reveal">
-        <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">MangaFox Provider</h1>
-        <p class="text-zinc-400 mb-12 font-light text-lg">A reliable provider for mangaFox (fanfox.net) covering home feeds, latest updates, manga info, and chapter reading with image fetching.</p>
+      <section id="kkh-home" class="mb-20 reveal">
+        <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">KissKH Provider</h1>
+        <p class="text-zinc-400 mb-12 font-light text-lg">Provider for kisskh.dk, covering latest releases, popular series, gennres, search, detailed series metadata, and streaming embed extraction.</p>
 
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Home</h2>
-        <p class="text-zinc-400 mb-6 font-light">Fetch hot manga releases, popular rankings, trending, latest updates, and recommendations from the homepage.</p>
+        <p class="text-zinc-400 mb-6 font-light">Fetch latest releases, recommendations by genre, and popular series (weekly/monthly/alltime).</p>
 
         <div class="mb-8">
           <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
-            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/mangafox/home?api_key=YOUR_KEY</span>
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/kisskh/home?api_key=YOUR_KEY</span>
           </div>
           <details class="group" open>
             <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
@@ -91,32 +90,24 @@
 <pre>{
   <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
   <span class="json-key">"data"</span>: {
-    <span class="json-key">"hot_manga_releases"</span>: [{
+    <span class="json-key">"latest_releases"</span>: [{
       <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
       <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
       <span class="json-key">"link"</span>: <span class="json-str">"string"</span>,
       <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"chapter"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"rating"</span>: <span class="json-num">0</span>,
-      <span class="json-key">"score"</span>: <span class="json-num">0</span>
+      <span class="json-key">"episode"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"status"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"sub"</span>: <span class="json-str">"string"</span>
     }],
-    <span class="json-key">"popular_manga_ranking"</span>: [{
-      <span class="json-key">"rank"</span>: <span class="json-num">1</span>,
-      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"chapter"</span>: <span class="json-str">"string"</span>
+    <span class="json-key">"recommendations"</span>: [{
+      <span class="json-key">"genre"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"series"</span>: [{ <span class="json-key">"title"</span>: <span class="json-str">"string"</span>, <span class="json-key">"id"</span>: <span class="json-str">"string"</span>, <span class="json-key">"image"</span>: <span class="json-str">"string"</span> }]
     }],
-    <span class="json-key">"latest_updates"</span>: [{
-      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"timeAgo"</span>: <span class="json-str">"string"</span>,
-      <span class="json-key">"chapters"</span>: [{ <span class="json-key">"name"</span>: <span class="json-str">"string"</span>, <span class="json-key">"link"</span>: <span class="json-str">"string"</span> }],
-      <span class="json-key">"genres"</span>: [<span class="json-str">"string"</span>]
-    }],
-    <span class="json-key">"recommended_manga"</span>: [ ... ],
-    <span class="json-key">"trending_manga"</span>: [ ... ],
-    <span class="json-key">"new_manga_release"</span>: [ ... ]
+    <span class="json-key">"popular"</span>: {
+      <span class="json-key">"weekly"</span>: [{ <span class="json-key">"title"</span>: <span class="json-str">"string"</span>, <span class="json-key">"id"</span>: <span class="json-str">"string"</span>, <span class="json-key">"image"</span>: <span class="json-str">"string"</span> }],
+      <span class="json-key">"monthly"</span>: [ ... ],
+      <span class="json-key">"alltime"</span>: [ ... ]
+    }
   }
 }</pre>
             </div>
@@ -124,14 +115,13 @@
         </div>
       </section>
 
-      <!-- SEARCH -->
-      <section id="mf-search" class="mb-20 reveal reveal-delay-1">
+      <section id="kkh-search" class="mb-20 reveal reveal-delay-1">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Search</h2>
-        <p class="text-zinc-400 mb-6 font-light">Search for manga by title on fanfox.net.</p>
+        <p class="text-zinc-400 mb-6 font-light">Search for dramas by title on kisskh.dk.</p>
 
         <div class="mb-8">
           <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
-            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/mangafox/search?api_key=YOUR_KEY&query=one+piece</span>
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/kisskh/search?api_key=YOUR_KEY&query=flower</span>
           </div>
           <div class="overflow-x-auto mb-6">
             <table class="w-full text-sm border-collapse">
@@ -152,17 +142,14 @@
             <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
 <pre>{
   <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
-  <span class="json-key">"query"</span>: <span class="json-str">"string"</span>,
   <span class="json-key">"data"</span>: [{
     <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
     <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
     <span class="json-key">"link"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"image"</span>: <span class="json-str">"string (proxied)"</span>,
-    <span class="json-key">"image_original"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"subtitle"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"rating"</span>: <span class="json-num">5</span>,
-    <span class="json-key">"score"</span>: <span class="json-num">9.28</span>,
-    <span class="json-key">"genres"</span>: [<span class="json-str">"string"</span>]
+    <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"status"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"episode"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"sub"</span>: <span class="json-str">"string"</span>
   }]
 }</pre>
             </div>
@@ -170,14 +157,13 @@
         </div>
       </section>
 
-      <!-- INFO -->
-      <section id="mf-info" class="mb-20 reveal reveal-delay-2">
-        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Manga Info</h2>
-        <p class="text-zinc-400 mb-6 font-light">Retrieve detailed metadata including authors, genres, description, cover image, and a complete chapter list.</p>
+      <section id="kkh-info" class="mb-20 reveal reveal-delay-2">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Series Info</h2>
+        <p class="text-zinc-400 mb-6 font-light">Full series metadata including genres, cast, director, network, country, and complete episode list.</p>
 
         <div class="mb-8">
           <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
-            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/mangafox/info?api_key=YOUR_KEY&id=vigilante_boku_no_hero_academia_illegals</span>
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/kisskh/info?api_key=YOUR_KEY&id=the-wonderfools-2026</span>
           </div>
           <div class="overflow-x-auto mb-6">
             <table class="w-full text-sm border-collapse">
@@ -199,23 +185,21 @@
 <pre>{
   <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
   <span class="json-key">"data"</span>: {
-    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
     <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"synopsis"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"release_year"</span>: <span class="json-str">"string"</span>,
     <span class="json-key">"status"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"description"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"rating"</span>: <span class="json-num">0</span>,
-    <span class="json-key">"score"</span>: <span class="json-num">0</span>,
-    <span class="json-key">"cover_image"</span>: <span class="json-str">"string"</span>,
-    <span class="json-key">"authors"</span>: [<span class="json-str">"string"</span>],
-    <span class="json-key">"genres"</span>: [{
-      <span class="json-key">"name"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"genres"</span>: [<span class="json-str">"string"</span>],
+    <span class="json-key">"cast"</span>: [<span class="json-str">"string"</span>],
+    <span class="json-key">"director"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"network"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"country"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"episode_count"</span>: <span class="json-num">8</span>,
+    <span class="json-key">"episodes"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
       <span class="json-key">"link"</span>: <span class="json-str">"string"</span>
-    }],
-    <span class="json-key">"chapter_count"</span>: <span class="json-num">135</span>,
-    <span class="json-key">"chapters"</span>: [{
-      <span class="json-key">"name"</span>: <span class="json-str">"Ch.001"</span>,
-      <span class="json-key">"link"</span>: <span class="json-str">"/manga/.../c001/1.html"</span>,
-      <span class="json-key">"date"</span>: <span class="json-str">"string"</span>
     }]
   }
 }</pre>
@@ -224,14 +208,13 @@
         </div>
       </section>
 
-      <!-- CHAPTER -->
-      <section id="mf-chapter" class="mb-32 reveal">
-        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Chapter Reader</h2>
-        <p class="text-zinc-400 mb-6 font-light">Fetch chapter metadata, page list, full chapter navigation, and all comic images extracted from the CDN. Images are served through the built-in proxy.</p>
+      <section id="kkh-stream" class="mb-32 reveal">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Stream</h2>
+        <p class="text-zinc-400 mb-6 font-light">Extract the streaming embed URL for a given episode.</p>
 
         <div class="mb-8">
           <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
-            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/mangafox/chapter?api_key=YOUR_KEY&id=vigilante_boku_no_hero_academia_illegals&chapter=c125</span>
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/kisskh/stream?api_key=YOUR_KEY&episode_id=the-wonderfools-episode-1</span>
           </div>
           <div class="overflow-x-auto mb-6">
             <table class="w-full text-sm border-collapse">
@@ -243,8 +226,7 @@
                 </tr>
               </thead>
               <tbody class="text-zinc-400 font-mono">
-                <tr class="border-b border-white/5"><td class="py-2 pr-6 text-white">id</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
-                <tr><td class="py-2 pr-6 text-white">chapter</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
+                <tr><td class="py-2 pr-6 text-white">episode_id</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
               </tbody>
             </table>
           </div>
@@ -254,43 +236,12 @@
 <pre>{
   <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
   <span class="json-key">"data"</span>: {
-    <span class="json-key">"title"</span>: <span class="json-str">"Vigilante: Boku no Hero Academia Illegals"</span>,
-    <span class="json-key">"chapter"</span>: <span class="json-str">"Ch.125"</span>,
-    <span class="json-key">"comic_id"</span>: <span class="json-num">21619</span>,
-    <span class="json-key">"chapter_id"</span>: <span class="json-num">1110690</span>,
-    <span class="json-key">"image_count"</span>: <span class="json-num">20</span>,
-    <span class="json-key">"images"</span>: [
-      <span class="json-str">"string (proxied)"</span>,
-      ...
-    ],
-    <span class="json-key">"images_original"</span>: [
-      <span class="json-str">"https://zjcdn.mangafox.me/..."</span>,
-      ...
-    ],
-    <span class="json-key">"pages"</span>: [{
-      <span class="json-key">"page"</span>: <span class="json-num">1</span>,
-      <span class="json-key">"url"</span>: <span class="json-str">"/manga/.../c125/1.html"</span>
-    }],
-    <span class="json-key">"chapters"</span>: [{
-      <span class="json-key">"name"</span>: <span class="json-str">"Ch.001"</span>,
-      <span class="json-key">"link"</span>: <span class="json-str">"/manga/.../c001/1.html"</span>
-    }],
-    <span class="json-key">"navigation"</span>: {
-      <span class="json-key">"prev"</span>: <span class="json-str">"/manga/.../c124/1.html"</span>,
-      <span class="json-key">"next"</span>: <span class="json-str">"/manga/.../c126/1.html"</span>
-    }
+    <span class="json-key">"embed_url"</span>: <span class="json-str">"string (dramavideo.se iframe source)"</span>,
+    <span class="json-key">"episode_id"</span>: <span class="json-str">"string"</span>
   }
 }</pre>
             </div>
           </details>
-        </div>
-
-        <div class="mb-8">
-          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Image Proxy</h3>
-          <p class="text-zinc-400 text-sm mb-4 font-light">The chapter reader extracts raw CDN image URLs (<code class="text-zinc-300">zjcdn.mangafox.me</code>) and returns them already wrapped in proxy URLs under <code class="text-zinc-300">images</code>. The raw URLs are in <code class="text-zinc-300">images_original</code>. Use the proxy endpoint directly to proxy any CDN image:</p>
-          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
-            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/mangafox/image-proxy?url=https://zjcdn.mangafox.me/store/manga/...</span>
-          </div>
         </div>
       </section>
 
@@ -300,56 +251,45 @@
       <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-5">API Tree</h3>
       <div class="space-y-0.5 font-mono text-xs">
         <div>
-          <a href="#mf-home" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+          <a href="#kkh-home" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
             <span class="text-emerald-400 font-semibold w-8">GET</span>
             <span class="text-white">/home</span>
           </a>
           <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">hot_manga_releases[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">popular_manga[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">latest_updates[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">recommended[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">trending[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">new_manga[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">latest_releases[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">recommendations[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">popular{weekly,monthly,alltime}</span></div>
           </div>
         </div>
         <div class="mt-3">
-          <a href="#mf-search" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+          <a href="#kkh-search" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
             <span class="text-emerald-400 font-semibold w-8">GET</span>
             <span class="text-white">/search</span>
           </a>
           <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">results[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">genres[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">results[]</span></div>
           </div>
         </div>
         <div class="mt-3">
-          <a href="#mf-info" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+          <a href="#kkh-info" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
             <span class="text-emerald-400 font-semibold w-8">GET</span>
             <span class="text-white">/info</span>
           </a>
           <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
             <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">genres[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">chapters[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">authors</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">cast[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">episodes[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">network, country</span></div>
           </div>
         </div>
         <div class="mt-3">
-          <a href="#mf-chapter" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+          <a href="#kkh-stream" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
             <span class="text-emerald-400 font-semibold w-8">GET</span>
-            <span class="text-white">/chapter</span>
+            <span class="text-white">/stream</span>
           </a>
           <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">pages[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">chapters[]</span></div>
-            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">navigation</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">embed_url</span></div>
           </div>
-        </div>
-        <div class="mt-3">
-          <span class="text-zinc-400 flex items-center gap-1.5 py-1">
-            <span class="text-purple-400 font-semibold w-8">IMG</span>
-            <span class="text-white">/image-proxy</span>
-          </span>
         </div>
       </div>
       <div class="mt-8 pt-5 border-t border-white/10">

@@ -35,12 +35,13 @@ export async function onRequest({ request, env }) {
       );
     }
 
-    // Validate URL is from fanfox CDN
-    if (!imageUrl.includes("fmcdn.mfcdn.net")) {
+    // Validate URL is from fanfox CDN domains
+    const allowed = ["fmcdn.mfcdn.net", "zjcdn.mangafox.me"];
+    if (!allowed.some(d => imageUrl.includes(d))) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Invalid image source. Only fanfox images are allowed.",
+          message: "Invalid image source. Only fanfox CDN images are allowed.",
         }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -50,7 +51,7 @@ export async function onRequest({ request, env }) {
     const response = await axios.get(imageUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "Referer": "https://fanfox.net/",
+        "Referer": "https://fanfox.net/manga/",
         "Accept": "image/*",
       },
       responseType: "arraybuffer",

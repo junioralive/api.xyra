@@ -30,10 +30,18 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
-    .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+    /* reveal system */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
+    .reveal-delay-1 { transition-delay: 0.05s; }
+    .reveal-delay-2 { transition-delay: 0.1s; }
+    .reveal-delay-3 { transition-delay: 0.15s; }
+    .reveal-delay-4 { transition-delay: 0.2s; }
+    .reveal-delay-5 { transition-delay: 0.25s; }
+    .reveal-delay-6 { transition-delay: 0.3s; }
+    .reveal-delay-7 { transition-delay: 0.35s; }
+    .reveal-delay-8 { transition-delay: 0.4s; }
   </style>
 </head>
 <body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white">
@@ -44,7 +52,7 @@
     </a>
     <a href="/" class="flex items-center gap-2 group flex-shrink-0">
       <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
-      <span class="font-semibold text-white text-sm tracking-tight hidden sm:block">YRA</span>
+      
     </a>
     <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
     <div class="flex-1 relative">
@@ -78,7 +86,7 @@
     <main class="flex-1 lg:ml-[17.5rem] xl:mr-[19rem] p-6 lg:p-12 max-w-4xl mx-auto">
 
       <!-- HOME -->
-      <section id="d9-home" class="mb-20 fade-in">
+      <section id="d9-home" class="mb-20 reveal">
         <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">Dramacool9 Provider</h1>
         <p class="text-zinc-400 mb-12 font-light text-lg">API for dramacool9.com.ro — Kdramas, K-shows, search, details, streaming links, and filtered discovery.</p>
 
@@ -120,7 +128,7 @@
       </section>
 
       <!-- SEARCH -->
-      <section id="d9-search" class="mb-20 fade-in delay-1">
+      <section id="d9-search" class="mb-20 reveal reveal-delay-1">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Search</h2>
         <p class="text-zinc-400 mb-6 font-light">Search for dramas by title with pagination support.</p>
 
@@ -168,7 +176,7 @@
       </section>
 
       <!-- INFO -->
-      <section id="d9-info" class="mb-20 fade-in delay-2">
+      <section id="d9-info" class="mb-20 reveal reveal-delay-2">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Details & Info</h2>
         <p class="text-zinc-400 mb-6 font-light">Retrieve drama metadata including synopsis, genres, cast, and a complete episode list. Scraped from the first episode page since this site embeds details there.</p>
 
@@ -219,7 +227,7 @@
       </section>
 
       <!-- STREAM -->
-      <section id="d9-stream" class="mb-20 fade-in">
+      <section id="d9-stream" class="mb-20 reveal">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Stream / Episode</h2>
         <p class="text-zinc-400 mb-6 font-light">Fetch streaming embeds and attempt m3u8 extraction for a specific episode.</p>
 
@@ -270,7 +278,7 @@
       </section>
 
       <!-- LIST -->
-      <section id="d9-list" class="mb-20 fade-in delay-1">
+      <section id="d9-list" class="mb-20 reveal reveal-delay-1">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> List & Browse</h2>
         <p class="text-zinc-400 mb-6 font-light">Browse dramas filtered by country or genre with pagination.</p>
 
@@ -318,7 +326,7 @@
       </section>
 
       <!-- DISCOVER -->
-      <section id="d9-discover" class="mb-32 fade-in delay-2">
+      <section id="d9-discover" class="mb-32 reveal reveal-delay-2">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Discover & Popular</h2>
         <p class="text-zinc-400 mb-6 font-light">Filtered discovery and popular dramas list with available filter metadata.</p>
 
@@ -485,6 +493,14 @@
     }
     window.addEventListener('scroll', updateActiveLink);
     window.addEventListener('load', updateActiveLink);
+  </script>
+  <script>
+    (function() {
+      const ro = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); ro.unobserve(e.target); } });
+      }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
+      document.querySelectorAll(".reveal").forEach(el => ro.observe(el));
+    })();
   </script>
 </body>
 </html>

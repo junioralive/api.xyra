@@ -25,13 +25,23 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
     .fade-in {
-      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       opacity: 0;
+      transform: translateY(16px);
+      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.05s; }
+    .reveal-delay-2 { transition-delay: 0.1s; }
+    .reveal-delay-3 { transition-delay: 0.15s; }
     .float {
       animation: float 4s ease-in-out infinite;
     }
@@ -47,7 +57,7 @@
   <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
     <a href="/" class="flex items-center gap-2 group flex-shrink-0">
       <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
-      <span class="font-semibold text-white text-sm tracking-tight hidden sm:block">YRA</span>
+      
     </a>
     <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
     <div class="flex-1 relative">
@@ -88,11 +98,17 @@
     </a>
   </div>
 
-  <footer class="absolute bottom-8 text-center fade-in" style="animation-delay: 0.2s;">
-    <p class="text-xs text-zinc-700">
-      Made by <span class="text-zinc-500">junioralive</span>. If you're still lost, try asking the ghost.
-    </p>
+  <footer class="py-12 text-center reveal reveal-delay-1">
+    <p class="text-xs text-zinc-600">© 2025 Xyra API. Built by <span class="text-zinc-500">junioralive</span>.</p>
   </footer>
 
+  <script>
+    (function() {
+      const ro = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); ro.unobserve(e.target); } });
+      }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
+      document.querySelectorAll(".reveal").forEach(el => ro.observe(el));
+    })();
+  </script>
 </body>
 </html>

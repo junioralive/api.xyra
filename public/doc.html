@@ -33,6 +33,23 @@
     .delay-1 { animation-delay: 0.1s; }
     .delay-2 { animation-delay: 0.2s; }
     .hidden-card { display: none !important; }
+    /* Smooth staggered reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.03s; }
+    .reveal-delay-2 { transition-delay: 0.06s; }
+    .reveal-delay-3 { transition-delay: 0.09s; }
+    .reveal-delay-4 { transition-delay: 0.12s; }
+    .reveal-delay-5 { transition-delay: 0.15s; }
+    .reveal-delay-6 { transition-delay: 0.18s; }
+    .reveal-delay-7 { transition-delay: 0.21s; }
+    .reveal-delay-8 { transition-delay: 0.24s; }
+    .reveal-delay-9 { transition-delay: 0.27s; }
+    .reveal-delay-10 { transition-delay: 0.30s; }
   </style>
 </head>
 <body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white min-h-screen flex flex-col">
@@ -41,7 +58,7 @@
   <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
     <a href="/" class="flex items-center gap-2 group flex-shrink-0">
       <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
-      <span class="font-semibold text-white text-sm tracking-tight hidden sm:block">YRA</span>
+      
     </a>
     
     <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
@@ -71,17 +88,16 @@
   <main class="flex-1 px-6 lg:px-12 pt-32 pb-20 max-w-7xl mx-auto w-full">
     
     <!-- Hero -->
-    <div class="text-center mb-16 fade-in">
-      <span class="inline-block px-3 py-1 rounded-full bg-white/5 text-zinc-400 text-xs font-medium border border-white/10 mb-6">API Provider Directory</span>
+    <div class="text-center mb-16 reveal">
       <h1 class="text-5xl md:text-6xl font-bold text-white tracking-tight mb-6">Choose Your Provider</h1>
       <p class="text-xl text-zinc-400 font-light leading-relaxed max-w-2xl mx-auto">
-        Xyra aggregates multiple high-performance sources. Search above or select a provider below to view its specific endpoints and usage.
+        Xyra brings multiple content providers into one place.
       </p>
     </div>
 
-    <!-- Drama & Movies -->
-    <div class="mb-16 fade-in delay-1 provider-section">
-      <h2 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Drama & Movies</h2>
+    <!-- Drama -->
+    <div class="mb-16 reveal reveal-delay-1 provider-section">
+      <h2 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Drama</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="dramaGrid">
         <a href="/docs/dramacool9.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="dramacool9 drama k-show asian new">
           <div class="flex items-center justify-between mb-4">
@@ -97,7 +113,7 @@
           </div>
         </a>
 
-        <a href="/docs/dramacool.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="dramacool drama k-show movie asian">
+        <a href="/docs/dramacool.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="dramacool drama k-show asian">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">Dramacool</h3>
             <svg class="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -110,18 +126,26 @@
           </div>
         </a>
 
-        <a href="/docs/kisskh.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="kisskh drama movie asian">
+        <a href="/docs/kisskh.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="kisskh drama asian">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">KissKH</h3>
             <svg class="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>
-          <p class="text-sm text-zinc-400 leading-relaxed mb-4">Alternative source for Asian drama and movie streaming metadata and links.</p>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-4">Provider for kisskh.dk covering latest releases, series details, search, and stream embed extraction.</p>
           <div class="flex flex-wrap gap-2">
             <span class="px-2 py-1 rounded bg-white/5 text-zinc-500 text-xs">Home</span>
+            <span class="px-2 py-1 rounded bg-white/5 text-zinc-500 text-xs">Search</span>
             <span class="px-2 py-1 rounded bg-white/5 text-zinc-500 text-xs">Info</span>
+            <span class="px-2 py-1 rounded bg-white/5 text-zinc-500 text-xs">Stream</span>
           </div>
         </a>
+      </div>
+    </div>
 
+    <!-- Movies -->
+    <div class="mb-16 reveal reveal-delay-2 provider-section">
+      <h2 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Movies</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="movieGrid">
         <a href="/docs/movies.html" class="provider-card glass-panel rounded-2xl p-6 block group" data-name="moviesdrive katmovies movie hollywood">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">MoviesDrive / KatMovies</h3>
@@ -136,9 +160,9 @@
       </div>
     </div>
 
-    <!-- Manga Providers -->
-    <div class="mb-16 fade-in delay-2 provider-section">
-      <h2 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Manga & Manhua Providers</h2>
+    <!-- Manga & Manhua -->
+    <div class="mb-16 reveal reveal-delay-3 provider-section">
+      <h2 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Manga & Manhua</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="mangaGrid">
         <a href="/docs/manganato.html" class="provider-card glass-panel rounded-2xl p-6 block group border-l-2 border-l-white/20" data-name="manganato manga full reader genres">
           <div class="flex items-center justify-between mb-4">
@@ -207,8 +231,8 @@
 
   </main>
 
-  <footer class="py-8 text-center border-t border-white/5 fade-in delay-2">
-    <p class="text-xs text-zinc-600">© 2025 Xyra API. Built by <span class="text-zinc-400">junioralive</span>.</p>
+  <footer class="py-12 text-center reveal reveal-delay-4">
+    <p class="text-xs text-zinc-600">© 2025 Xyra API. Built by <span class="text-zinc-500">junioralive</span>.</p>
   </footer>
 
   <script>
@@ -239,6 +263,13 @@
 
       noResults.classList.toggle('hidden', visibleCount > 0 || query === '');
     });
+
+    (function() {
+      const ro = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); ro.unobserve(e.target); } });
+      }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+      document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+    })();
   </script>
 </body>
 </html>
