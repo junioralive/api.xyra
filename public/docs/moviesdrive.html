@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoviesDrive API Documentation | Xyra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #000000; font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-pill { background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+    .code-block { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .nav-link { transition: all 0.2s ease; border-left: 2px solid transparent; }
+    .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
+    .nav-link.active { background: rgba(255, 255, 255, 0.08); color: #ffffff; border-left: 2px solid #ffffff; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .json-key { color: #7dd3fc; }
+    .json-str { color: #a5d6a7; }
+    .json-num { color: #ffcc80; }
+    .json-bool { color: #ce93d8; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.05s; }
+    .reveal-delay-2 { transition-delay: 0.1s; }
+    .reveal-delay-3 { transition-delay: 0.15s; }
+    .reveal-delay-4 { transition-delay: 0.2s; }
+    .reveal-delay-5 { transition-delay: 0.25s; }
+    .reveal-delay-6 { transition-delay: 0.3s; }
+    .reveal-delay-7 { transition-delay: 0.35s; }
+    .reveal-delay-8 { transition-delay: 0.4s; }
+  </style>
+</head>
+<body class="text-zinc-400 antialiased selection:bg-white/20 selection:text-white">
+
+  <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-pill rounded-full px-4 py-2.5 flex items-center gap-4 w-[95%] max-w-4xl">
+    <a href="/doc.html" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition-colors flex-shrink-0" title="Back to Docs">
+      <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <a href="/" class="flex items-center gap-2 group flex-shrink-0">
+      <img src="https://xyra.stream/logo.png" alt="Xyra Logo" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform">
+    </a>
+    <div class="w-px h-5 bg-white/10 hidden sm:block"></div>
+    <div class="flex-1 relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" placeholder="Search providers..." onkeydown="if(event.key==='Enter') window.location.href='/doc.html?q='+this.value" class="w-full bg-transparent border-none text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-0 pl-9 pr-4 py-1.5">
+    </div>
+    <div class="flex items-center gap-4 flex-shrink-0">
+      <a href="/doc.html" class="text-xs font-medium text-zinc-400 hover:text-white transition-colors hidden sm:block">Docs</a>
+      <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="text-zinc-500 hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Z"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <div class="flex pt-24">
+    <aside class="fixed left-6 top-24 w-64 h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-6 hidden lg:block">
+      <h3 class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-6">Endpoints</h3>
+      <div class="space-y-1">
+        <a href="#md-home" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Home</a>
+        <a href="#md-search" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Search</a>
+        <a href="#md-info" class="nav-link block px-3 py-2 rounded-md text-sm text-zinc-400">Movie Info</a>
+      </div>
+    </aside>
+
+    <main class="flex-1 lg:ml-[17.5rem] xl:mr-[19rem] p-6 lg:p-12 max-w-4xl mx-auto">
+
+      <section id="md-home" class="mb-20 reveal">
+        <h1 class="text-4xl font-bold text-white mb-6 tracking-tight">MoviesDrive Provider</h1>
+        <p class="text-zinc-400 mb-12 font-light text-lg">Provider for new3.moviesdrives.my — Hollywood movies, TV series, Netflix, Amazon Prime, with poster cards and quality labels.</p>
+
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Home</h2>
+        <p class="text-zinc-400 mb-6 font-light">Browse latest movies and series from the homepage feed with quality indicators and pagination.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/moviesdrive/home?api_key=YOUR_KEY&page=1</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead><tr class="border-b border-white/10 text-left"><th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th><th class="py-2 pr-6 text-zinc-500 font-medium">Type</th><th class="py-2 text-zinc-500 font-medium">Required</th></tr></thead>
+              <tbody class="text-zinc-400 font-mono"><tr><td class="py-2 pr-6 text-white">page</td><td class="py-2 pr-6">number</td><td class="py-2 text-zinc-500">No (default 1)</td></tr></tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"posts"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"link"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"quality"</span>: <span class="json-str">"4K | 1080p | 720p"</span>,
+      <span class="json-key">"type"</span>: <span class="json-str">"movie | series"</span>
+    }],
+    <span class="json-key">"pagination"</span>: { <span class="json-key">"current_page"</span>: <span class="json-num">1</span>, <span class="json-key">"total_pages"</span>: <span class="json-num">100</span>, <span class="json-key">"has_next"</span>: <span class="json-bool">true</span> }
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="md-search" class="mb-20 reveal reveal-delay-1">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Search</h2>
+        <p class="text-zinc-400 mb-6 font-light">Search movies and series by title on moviesdrives.my.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/moviesdrive/search?api_key=YOUR_KEY&query=spider</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead><tr class="border-b border-white/10 text-left"><th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th><th class="py-2 pr-6 text-zinc-500 font-medium">Type</th><th class="py-2 text-zinc-500 font-medium">Required</th></tr></thead>
+              <tbody class="text-zinc-400 font-mono">
+                <tr><td class="py-2 pr-6 text-white">query</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr>
+                <tr><td class="py-2 pr-6 text-white">page</td><td class="py-2 pr-6">number</td><td class="py-2 text-zinc-500">No (default 1)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"query"</span>: <span class="json-str">"string"</span>,
+  <span class="json-key">"data"</span>: [{
+    <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"link"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"quality"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"type"</span>: <span class="json-str">"movie | series"</span>
+  }]
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="md-info" class="mb-32 reveal reveal-delay-2">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-white"></span> Movie Info</h2>
+        <p class="text-zinc-400 mb-6 font-light">Detailed movie/series metadata including description, categories, IMDb ID, and related posts.</p>
+
+        <div class="mb-8">
+          <div class="code-block rounded-xl p-5 font-mono text-sm mb-4">
+            <span class="text-white font-semibold">GET</span> <span class="text-zinc-400">/v1/moviesdrive/info?api_key=YOUR_KEY&id=spider-noir-season-1-2026</span>
+          </div>
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-sm border-collapse">
+              <thead><tr class="border-b border-white/10 text-left"><th class="py-2 pr-6 text-zinc-500 font-medium">Parameter</th><th class="py-2 pr-6 text-zinc-500 font-medium">Type</th><th class="py-2 text-zinc-500 font-medium">Required</th></tr></thead>
+              <tbody class="text-zinc-400 font-mono"><tr><td class="py-2 pr-6 text-white">id</td><td class="py-2 pr-6">string</td><td class="py-2 text-emerald-400">Yes</td></tr></tbody>
+            </table>
+          </div>
+          <details class="group" open>
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-widest cursor-pointer hover:text-zinc-400 mb-3 select-none">Response Schema</summary>
+            <div class="code-block rounded-xl p-5 font-mono text-xs leading-relaxed overflow-x-auto">
+<pre>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"image"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"description"</span>: <span class="json-str">"string"</span>,
+    <span class="json-key">"categories"</span>: [<span class="json-str">"string"</span>],
+    <span class="json-key">"imdb_id"</span>: <span class="json-str">"tt30460310"</span>,
+    <span class="json-key">"type"</span>: <span class="json-str">"movie | series"</span>,
+    <span class="json-key">"downloads"</span>: [{
+      <span class="json-key">"quality"</span>: <span class="json-str">"480p x264"</span>,
+      <span class="json-key">"url"</span>: <span class="json-str">"https://mdrive.lol/archive/6084/"</span>
+    }],
+    <span class="json-key">"download_count"</span>: <span class="json-num">10</span>,
+    <span class="json-key">"related"</span>: [{
+      <span class="json-key">"title"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"id"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"link"</span>: <span class="json-str">"string"</span>,
+      <span class="json-key">"image"</span>: <span class="json-str">"string"</span>
+    }]
+  }
+}</pre>
+            </div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="fixed right-6 top-24 w-72 h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-6 hidden xl:block">
+      <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-5">API Tree</h3>
+      <div class="space-y-0.5 font-mono text-xs">
+        <div>
+          <a href="#md-home" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span><span class="text-white">/home</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">posts[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">pagination</span></div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="#md-search" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span><span class="text-white">/search</span>
+          </a>
+        </div>
+        <div class="mt-3">
+          <a href="#md-info" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 py-1">
+            <span class="text-emerald-400 font-semibold w-8">GET</span><span class="text-white">/info</span>
+          </a>
+          <div class="ml-4 pl-3 border-l border-white/10 space-y-0.5">
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">categories[]</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">├─</span><span class="text-zinc-500">imdb_id</span></div>
+            <div class="text-zinc-500 py-0.5 flex items-center gap-1"><span class="text-zinc-600">└─</span><span class="text-zinc-500">related[]</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 pt-5 border-t border-white/10">
+        <div class="glass-panel rounded-lg p-3 text-center">
+          <p class="text-xs text-zinc-500 mb-2">Need help?</p>
+          <a href="https://discord.gg/cwDTVKyKJz" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-xs text-white border border-white/10">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.518.074.074 0 0 0-.079.037c-.21.37-.444.856-.608 1.237a19.021 19.021 0 0 0-5.486 0 12.239 12.239 0 0 0-.617-1.237.077.077 0 0 0-.08-.037A19.571 19.571 0 0 0 3.683 4.37a.069.069 0 0 0-.032.027C.533 9.039-.319 13.578.099 18.057a.082.082 0 0 0 .031.056 19.984 19.984 0 0 0 5.992 3.041.077.077 0 0 0 .084-.026c.46-.63.869-1.3 1.226-2a.076.076 0 0 0-.041-.104 13.13 13.13 0 0 1-1.872-.883.075.075 0 0 1-.008-.126 9.584 9.584 0 0 0 .372-.293.074.074 0 0 1 .076-.01 15.613 15.613 0 0 0 10.534 0 .074.074 0 0 1 .076.009c.121.095.247.195.373.294a.075.075 0 0 1-.006.126 13.167 13.167 0 0 1-1.873.882.076.076 0 0 0-.041.105c.36.7.769 1.37 1.227 2a.075.075 0 0 0 .084.026 19.958 19.958 0 0 0 5.993-3.04.076.076 0 0 0 .031-.056c.5-5.146-.838-9.631-3.552-13.661a.062.062 0 0 0-.033-.028Z"/></svg>
+            Join Discord
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      const ro = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); ro.unobserve(e.target); } });
+      }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
+      document.querySelectorAll(".reveal").forEach(el => ro.observe(el));
+    })();
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    function updateActiveLink() {
+      let current = '';
+      const scrollPos = scrollY + window.innerHeight / 2;
+      sections.forEach(section => {
+        const sTop = section.offsetTop;
+        if (scrollPos >= sTop && scrollPos < sTop + section.offsetHeight) current = section.getAttribute('id');
+      });
+      if (window.innerHeight + scrollY >= document.body.offsetHeight - 100) current = sections[sections.length - 1].getAttribute('id');
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (current && link.getAttribute('href').includes(current)) link.classList.add('active');
+      });
+    }
+    window.addEventListener('scroll', updateActiveLink);
+    window.addEventListener('load', updateActiveLink);
+  </script>
+</body>
+</html>
